@@ -1,0 +1,16 @@
+{% macro admin_nav(active="") %}
+<div style="background:#1e293b;padding:14px 40px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+  <span style="color:white;font-weight:800;font-size:1rem;margin-right:10px;"><i class="fas fa-bolt"></i> Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}" style="color:{% if active=='dashboard' %}white{% else %}#94a3b8{% endif %};text-decoration:none;font-weight:600;font-size:.9rem;">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}" style="color:{% if active=='users' %}white{% else %}#94a3b8{% endif %};text-decoration:none;font-weight:600;font-size:.9rem;">Utilisateurs</a>
+  <a href="{{ url_for('admin.partners') }}" style="color:{% if active=='partners' %}white{% else %}#94a3b8{% endif %};text-decoration:none;font-weight:600;font-size:.9rem;">Partenaires</a>
+  <a href="{{ url_for('admin.restaurants') }}" style="color:{% if active=='restaurants' %}white{% else %}#94a3b8{% endif %};text-decoration:none;font-weight:600;font-size:.9rem;">Restaurants</a>
+  <a href="{{ url_for('admin.orders') }}" style="color:{% if active=='orders' %}white{% else %}#94a3b8{% endif %};text-decoration:none;font-weight:600;font-size:.9rem;">Commandes</a>
+  <a href="{{ url_for('admin.stats') }}" style="color:{% if active=='stats' %}white{% else %}#94a3b8{% endif %};text-decoration:none;font-weight:600;font-size:.9rem;">Statistiques</a>
+  <a href="{{ url_for('admin.commissions') }}" style="color:#fbbf24;text-decoration:none;font-weight:600;font-size:.9rem;">💰 Commissions</a>
+  <a href="{{ url_for('admin.drivers') }}" style="color:#34d399;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livreurs</a>
+  <a href="{{ url_for('admin.promos') }}" style="color:#f472b6;text-decoration:none;font-weight:600;font-size:.9rem;">🏷️ Promos</a>
+  <a href="{{ url_for('admin.reviews') }}" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:.9rem;">⭐ Avis</a>
+  <a href="{{ url_for('auth.logout') }}" style="margin-left:auto;color:#f87171;text-decoration:none;font-weight:600;font-size:.9rem;">Déconnexion</a>
+</div>
+{% endmacro %}

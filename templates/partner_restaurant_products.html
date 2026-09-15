@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import restaurant_img, product_img %}
+{% block title %}Produits - {{ restaurant.name }}{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:40px auto;padding:0 20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:30px;">
+    <div>
+      <a href="{{ url_for('partner.dashboard') }}" style="color:#dc2626;text-decoration:none;font-weight:600;">
+        <i class="fas fa-arrow-left"></i> Dashboard
+      </a>
+      <h3 style="font-weight:800;margin:8px 0 4px;">{{ restaurant.name }}</h3>
+      <p style="color:#888;margin:0;">{{ total_products }} produit(s) · Valeur stock : {{ total_value|int }} FCFA</p>
+    </div>
+    <a href="{{ url_for('partner.add_product', restaurant_id=restaurant.id) }}"
+       style="background:#dc2626;color:white;padding:10px 22px;border-radius:25px;text-decoration:none;font-weight:600;">
+      <i class="fas fa-plus"></i> Ajouter un produit
+    </a>
+  </div>
+
+  {% if products %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;">
+    {% for product in products %}
+    <div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,0.08);">
+      {% if product.image %}
+        <img src="{{ url_for('static', filename='uploads/' + product.image) }}"
+             alt="{{ product.name }}" style="width:100%;height:150px;object-fit:cover;">
+      {% else %}
+        <div style="height:150px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:2.5rem;">🍽️</div>
+      {% endif %}
+      <div style="padding:15px;">
+        <h5 style="font-weight:700;margin-bottom:4px;">{{ product.name }}</h5>
+        <p style="font-size:.83rem;color:#666;margin-bottom:8px;">{{ (product.description or '')|truncate(60) }}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span style="font-weight:700;color:#dc2626;">{{ product.price|int }} FCFA</span>
+          <span style="font-size:.82rem;background:#f3f4f6;padding:3px 10px;border-radius:20px;">Stock : {{ product.stock }}</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <a href="{{ url_for('partner.edit_product', product_id=product.id) }}"
+             style="flex:1;text-align:center;background:#dbeafe;color:#1e40af;padding:7px;border-radius:10px;text-decoration:none;font-size:.83rem;font-weight:600;">
+            <i class="fas fa-pen"></i> Modifier
+          </a>
+          <form method="POST" action="{{ url_for('partner.delete_product', product_id=product.id) }}" style="flex:1;"
+                onsubmit="return confirm('Supprimer ce produit ?')">
+            <button type="submit" style="width:100%;background:#fee2e2;color:#991b1b;padding:7px;border-radius:10px;border:none;font-size:.83rem;font-weight:600;cursor:pointer;">
+              <i class="fas fa-trash"></i> Supprimer
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px;background:white;border-radius:16px;">
+    <div style="font-size:3.5rem;margin-bottom:15px;">📦</div>
+    <h5>Aucun produit pour ce restaurant</h5>
+    <a href="{{ url_for('partner.add_product', restaurant_id=restaurant.id) }}" class="btn btn-danger mt-3">Ajouter un produit</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

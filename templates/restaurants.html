@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% from "_macros.html" import restaurant_img %}
+{% block title %}Commerces - QuickFood{% endblock %}
+
+{% block content %}
+<div style="max-width:1200px;margin:40px auto;padding:0 20px;">
+
+  <!-- Header + géoloc -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <span class="qf-eyebrow">Explorer</span>
+      <h2 class="qf-h2" style="margin-top:4px;">Tous les commerces</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="geo-status" style="font-size:.82rem;color:var(--qf-muted);">
+        <i class="fas fa-spinner fa-spin" style="color:var(--qf-primary);"></i> Calcul...
+      </span>
+      <button onclick="locateMe()" class="qf-btn qf-btn-ghost qf-btn-sm">
+        <i class="fas fa-crosshairs"></i> Ma position
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres par catégorie -->
+  <div class="qf-pill-row" id="filters">
+    <button class="qf-pill active" data-cat="all">🏪 Tout</button>
+    <button class="qf-pill" data-cat="restaurant">🍽️ Restaurants</button>
+    <button class="qf-pill" data-cat="supermarche">🛒 Supermarchés</button>
+    <button class="qf-pill" data-cat="fruiterie">🍎 Fruiteries</button>
+    <button class="qf-pill" data-cat="boulangerie">🥐 Boulangeries</button>
+  </div>
+
+  <!-- Grille -->
+  <div id="restaurants-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;margin-top:10px;">
+    {% for r in restaurants %}
+    <a href="{{ url_for('main.restaurant_menu', restaurant_id=r.id) }}"
+       class="resto-card qf-card qf-card-hover qf-resto-card"
+       data-lat="{{ r.latitude if r.latitude else '' }}"
+       data-lng="{{ r.longitude if r.longitude else '' }}"
+       data-cat="{{ r.category }}"
+       data-distance="9999">
+      <div class="qf-resto-img">
+        {{ restaurant_img(r, height='100%', show_badge=false) }}
+        <span class="qf-badge-cat">{{ r.category_icon }} {{ r.category_label }}</span>
+        <span class="qf-badge-dist"><span class="dist-value">--</span></span>
+      </div>
+      <div class="qf-resto-body">
+        <h3>{{ r.name }}</h3>
+        <div class="qf-rating">
+          {% set avg = restaurant_ratings.get(r.id) %}
+          {% if avg %}★ {{ "%.1f"|format(avg) }}{% else %}<span class="qf-muted" style="font-weight:600;">Nouveau</span>{% endif %}
+          <span class="qf-muted fee-value" style="font-weight:600;"></span>
+        </div>
+        <p class="qf-muted" style="font-size:.82rem;margin:6px 0 0;">{{ (r.description or '')|truncate(50) }}</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <p id="empty-msg" style="display:none;text-align:center;color:#9ca3af;padding:40px;">
+    Aucun commerce dans cette catégorie.
+  </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function haversine(lat1,lon1,lat2,lon2){
+  var R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function deliveryFee(km){
+  if(km<=2)return'500 FCFA';if(km<=5)return'1 000 FCFA';
+  if(km<=10)return'1 500 FCFA';if(km<=20)return'2 500 FCFA';return'3 500 FCFA';
+}
+function updateDistances(userLat,userLng){
+  document.querySelectorAll('.resto-card').forEach(function(card){
+    var rLat=parseFloat(card.getAttribute('data-lat'));
+    var rLng=parseFloat(card.getAttribute('data-lng'));
+    var dv=card.querySelector('.dist-value');
+    var fv=card.querySelector('.fee-value');
+    if(!rLat||!rLng||isNaN(rLat)){dv.textContent='N/A';fv.textContent='';card.setAttribute('data-distance',9999);return;}
+    var d=haversine(userLat,userLng,rLat,rLng);
+    card.setAttribute('data-distance',d);
+    dv.textContent=d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km';
+    fv.textContent=' · '+deliveryFee(d);
+  });
+  sortCards();
+  document.getElementById('geo-status').innerHTML='<i class="fas fa-check-circle" style="color:#10b981;"></i> Trié par distance';
+}
+function sortCards(){
+  var grid=document.getElementById('restaurants-grid');
+  var visible=Array.prototype.slice.call(document.querySelectorAll('.resto-card')).filter(function(c){return c.style.display!=='none';});
+  visible.sort(function(a,b){return parseFloat(a.getAttribute('data-distance'))-parseFloat(b.getAttribute('data-distance'));});
+  visible.forEach(function(c){grid.appendChild(c);});
+}
+document.querySelectorAll('.qf-pill').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var cat=this.getAttribute('data-cat');
+    document.querySelectorAll('.qf-pill').forEach(function(b){ b.classList.remove('active'); });
+    this.classList.add('active');
+    var cards=document.querySelectorAll('.resto-card');
+    var visible=0;
+    cards.forEach(function(card){
+      if(cat==='all'||card.getAttribute('data-cat')===cat){ card.style.display=''; visible++; }
+      else { card.style.display='none'; }
+    });
+    document.getElementById('empty-msg').style.display=visible===0?'block':'none';
+    sortCards();
+  });
+});
+function locateMe(){
+  var s=document.getElementById('geo-status');
+  if(!navigator.geolocation){updateDistances(14.6928,-17.4467);return;}
+  s.innerHTML='<i class="fas fa-spinner fa-spin"></i> Localisation...';
+  navigator.geolocation.getCurrentPosition(
+    function(p){updateDistances(p.coords.latitude,p.coords.longitude);},
+    function(){s.innerHTML='<i class="fas fa-map-marker-alt" style="color:#f59e0b;"></i> Dakar (défaut)';updateDistances(14.6928,-17.4467);}
+    ,{timeout:8000}
+  );
+}
+window.addEventListener('load',function(){locateMe();});
+</script>
+{% endblock %}

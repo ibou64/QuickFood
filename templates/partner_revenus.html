@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Mes Revenus — QuickFood{% endblock %}
+
+{% block extra_css %}
+<style>
+.partner-header {
+  background:linear-gradient(135deg,#1e293b,#334155);
+  color:white; padding:clamp(16px,4vw,32px) clamp(14px,4vw,40px);
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+}
+.kpi { background:white; border-radius:14px; padding:20px 16px;
+  box-shadow:0 6px 18px rgba(0,0,0,.07); text-align:center; flex:1 1 140px; }
+.kpi-num   { font-size:clamp(1.3rem,3.5vw,1.75rem); font-weight:800; }
+.kpi-label { color:#6b7280; font-size:.78rem; margin-top:4px; }
+.card { background:white; border-radius:16px; padding:24px;
+  box-shadow:0 6px 18px rgba(0,0,0,.07); margin-bottom:22px; }
+.tab-btn { padding:8px 18px; border-radius:25px; border:none; cursor:pointer;
+  font-weight:600; font-size:.86rem; background:#f1f5f9; color:#374151; transition:.2s; }
+.tab-btn.active { background:#dc2626; color:white; }
+table { width:100%; border-collapse:collapse; font-size:.86rem; }
+thead tr { background:#1e293b; color:white; }
+th, td { padding:11px 12px; text-align:right; }
+th:first-child, td:first-child { text-align:left; }
+tbody tr:nth-child(even) { background:#f8fafc; }
+.badge-done    { background:#d1fae5; color:#065f46; padding:2px 9px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.badge-pending { background:#fef3c7; color:#92400e; padding:2px 9px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.split-bar { display:flex; height:8px; border-radius:6px; overflow:hidden; margin:8px 0 4px; }
+@media(max-width:640px) {
+  .partner-header { flex-direction:column; align-items:flex-start; }
+  th, td { padding:9px 8px; font-size:.78rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="partner-header">
+  <div>
+    <h2 style="font-weight:800;margin-bottom:4px;">💰 Mes Revenus</h2>
+    <p style="opacity:.8;margin:0;font-size:.88rem;">Répartition automatique après confirmation du paiement</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <a href="{{ url_for('partner.dashboard') }}"
+       style="background:rgba(255,255,255,.15);color:white;padding:9px 18px;border-radius:25px;text-decoration:none;font-weight:600;font-size:.88rem;">
+      ← Dashboard
+    </a>
+  </div>
+</div>
+
+<div style="max-width:1100px;margin:30px auto;padding:0 clamp(10px,3vw,20px);">
+
+  <!-- Filtres période -->
+  <div style="display:flex;gap:8px;margin-bottom:24px;">
+    <a href="{{ url_for('partner.revenus', period='week')  }}" class="tab-btn {% if period=='week'  %}active{% endif %}">7 jours</a>
+    <a href="{{ url_for('partner.revenus', period='month') }}" class="tab-btn {% if period=='month' %}active{% endif %}">30 jours</a>
+    <a href="{{ url_for('partner.revenus', period='all')   }}" class="tab-btn {% if period=='all'   %}active{% endif %}">Tout</a>
+  </div>
+
+  <!-- KPIs globaux -->
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:28px;">
+    <div class="kpi">
+      <div class="kpi-num" style="color:#1e293b;">{{ grand_total|int|format_number }}</div>
+      <div class="kpi-label">Total encaissé (FCFA)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#dc2626;">{{ grand_comm|int|format_number }}</div>
+      <div class="kpi-label">Commission QuickFood</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#3b82f6;">{{ grand_delivery|int|format_number }}</div>
+      <div class="kpi-label">Frais de livraison</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#10b981;">{{ grand_net|int|format_number }}</div>
+      <div class="kpi-label">Net à recevoir (FCFA)</div>
+    </div>
+  </div>
+
+  <!-- Barre répartition globale -->
+  {% if grand_total > 0 %}
+  {% set pct_comm = ((grand_comm     / grand_total) * 100)|round(1) %}
+  {% set pct_dlv  = ((grand_delivery / grand_total) * 100)|round(1) %}
+  {% set pct_net  = ((grand_net      / grand_total) * 100)|round(1) %}
+  <div class="card" style="padding:18px 22px;">
+    <div style="font-weight:700;font-size:.88rem;margin-bottom:8px;">Répartition globale</div>
+    <div class="split-bar">
+      <div style="width:{{ pct_comm }}%;background:#dc2626;"></div>
+      <div style="width:{{ pct_dlv  }}%;background:#3b82f6;"></div>
+      <div style="width:{{ pct_net  }}%;background:#10b981;"></div>
+    </div>
+    <div style="display:flex;gap:18px;font-size:.82rem;flex-wrap:wrap;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:2px;margin-right:4px;"></span>Commission QF : <strong>{{ pct_comm }}%</strong></span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;margin-right:4px;"></span>Livraison : <strong>{{ pct_dlv }}%</strong></span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px;"></span>Votre net : <strong>{{ pct_net }}%</strong></span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Détail par restaurant -->
+  {% for row in rows %}
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+      <div>
+        <span style="font-weight:800;font-size:1rem;">{{ row.restaurant.name }}</span>
+        <span style="background:#fef2f2;color:#dc2626;border-radius:12px;padding:2px 9px;font-size:.75rem;font-weight:700;margin-left:8px;">
+          {{ row.restaurant.category_icon }} {{ row.restaurant.commission_rate }}% commission
+        </span>
+        {% if row.pending > 0 %}
+        <span class="badge-pending" style="margin-left:6px;">⏳ {{ row.pending }} en attente</span>
+        {% endif %}
+      </div>
+      <div style="font-size:.82rem;color:#6b7280;">{{ row.nb_orders }} commandes payées</div>
+    </div>
+
+    <!-- Mini KPIs restaurant -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:18px;">
+      <div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-weight:800;font-size:1.1rem;color:#dc2626;">{{ row.commission|int|format_number }}</div>
+        <div style="font-size:.75rem;color:#6b7280;">Commission QF</div>
+      </div>
+      <div style="background:#eff6ff;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-weight:800;font-size:1.1rem;color:#3b82f6;">{{ row.delivery|int|format_number }}</div>
+        <div style="font-size:.75rem;color:#6b7280;">Livraison (QF)</div>
+      </div>
+      <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-weight:800;font-size:1.1rem;color:#10b981;">{{ row.net|int|format_number }}</div>
+        <div style="font-size:.75rem;color:#6b7280;">Votre net (FCFA)</div>
+      </div>
+    </div>
+
+    <!-- Liste des commandes -->
+    {% if row.orders %}
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th style="text-align:left;">Client</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Commission</th>
+            <th style="color:#10b981;">Votre part</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in row.orders %}
+          <tr>
+            <td style="font-weight:700;color:#dc2626;">#{{ o.id }}</td>
+            <td style="text-align:left;">{{ o.user.name if o.user else '—' }}</td>
+            <td style="color:#6b7280;">{{ o.created_at.strftime('%d/%m/%y %H:%M') }}</td>
+            <td style="font-weight:600;">{{ (o.total_amount or 0)|int|format_number }}</td>
+            <td style="color:#dc2626;">
+              {% if o.split_status == 'done' %}{{ (o.commission_amount or 0)|int|format_number }}{% else %}—{% endif %}
+            </td>
+            <td style="color:#10b981;font-weight:700;">
+              {% if o.split_status == 'done' %}{{ (o.restaurant_amount or 0)|int|format_number }}{% else %}—{% endif %}
+            </td>
+            <td>
+              {% if o.split_status == 'done' %}
+                <span class="badge-done">✓ Calculé</span>
+              {% else %}
+                <span class="badge-pending">⏳ Pending</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="card" style="text-align:center;color:#9ca3af;padding:48px;">
+    <div style="font-size:2.5rem;margin-bottom:12px;">💰</div>
+    <p style="font-weight:600;">Aucune commande payée sur cette période.</p>
+  </div>
+  {% endfor %}
+
+  <!-- Note explicative -->
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px 22px;font-size:.84rem;color:#6b7280;">
+    <strong style="color:#374151;">ℹ️ Comment fonctionne le split ?</strong><br>
+    À chaque paiement confirmé par PayTech (Wave / Orange Money / Carte), QuickFood calcule automatiquement
+    votre part nette : <em>sous-total articles − commission QuickFood</em>. Les frais de livraison restent
+    intégralement à QuickFood. Le virement vers votre compte est effectué par l'équipe QuickFood selon le
+    calendrier convenu (hebdomadaire ou mensuel).
+  </div>
+
+</div>
+{% endblock %}

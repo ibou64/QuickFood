@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% from "_macros.html" import restaurant_img, product_img %}
+{% block title %}{{ restaurant.name }} - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+.menu-header { background:#dc2626;color:white;padding:20px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap; }
+.menu-grid   { display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px; }
+.product-card{ background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,0.08);
+               display:flex;flex-direction:column;transition:.3s; }
+.product-card:hover { transform:translateY(-5px); }
+.add-btn { display:block;background:#dc2626;color:white;text-align:center;padding:10px;
+           border-radius:10px;text-decoration:none;font-weight:700;font-size:.9rem;transition:.2s; }
+.add-btn:hover { background:#b91c1c;color:white; }
+
+/* Badge catégorie */
+.cat-badge { display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.2);
+             border-radius:20px;padding:4px 12px;font-size:.8rem;font-weight:700;margin-top:6px; }
+
+@media(max-width:640px){
+  .menu-header { padding:16px 12px;gap:12px; }
+  .menu-header h2 { font-size:1.2rem;margin:4px 0 2px; }
+  .menu-grid { grid-template-columns:repeat(2,1fr);gap:10px; }
+  .product-card .pad { padding:10px !important; }
+}
+@media(max-width:360px){
+  .menu-grid { grid-template-columns:1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header restaurant -->
+<div class="menu-header">
+  <div style="flex-shrink:0;">
+    {{ restaurant_img(restaurant, height='80px', radius='12px') }}
+  </div>
+  <div style="flex:1;min-width:0;">
+    <a href="{{ url_for('main.restaurants') }}"
+       style="color:rgba(255,255,255,.8);text-decoration:none;font-weight:600;font-size:.85rem;">
+      <i class="fas fa-arrow-left"></i> Retour
+    </a>
+    <h2 style="margin:6px 0 2px;font-weight:800;font-size:clamp(1.1rem,4vw,1.6rem);">{{ restaurant.name }}</h2>
+    <p style="opacity:.85;margin:0;font-size:clamp(.8rem,2.5vw,.95rem);">{{ restaurant.description or '' }}</p>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div class="cat-badge">{{ restaurant.category_icon }} {{ restaurant.category_label }}</div>
+      {% if rating_avg %}
+      <div class="cat-badge" style="background:rgba(255,255,255,.28);">
+        <span style="color:#fde68a;">★</span> {{ "%.1f"|format(rating_avg) }} ({{ reviews|length }} avis)
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Produits -->
+<div style="max-width:1200px;margin:28px auto;padding:0 clamp(10px,3vw,20px);">
+  {% if products %}
+  <div class="menu-grid">
+    {% for product in products %}
+    <div class="product-card">
+      {{ product_img(product, height='clamp(120px,30vw,160px)') }}
+      {% if product.has_video %}
+      <div style="background:#1e293b;position:relative;">
+        {% if product.video_file %}
+        <video controls preload="none" style="width:100%;height:clamp(130px,32vw,170px);object-fit:cover;display:block;">
+          <source src="{{ url_for('static', filename='uploads/' + product.video_file) }}" type="video/mp4">
+        </video>
+        {% elif product.video_embed_url %}
+        <iframe src="{{ product.video_embed_url }}" frameborder="0" allowfullscreen
+          style="width:100%;height:clamp(130px,32vw,170px);display:block;"></iframe>
+        {% endif %}
+        <span style="position:absolute;top:6px;left:6px;background:rgba(220,38,38,.9);
+          color:white;border-radius:10px;padding:2px 8px;font-size:.7rem;font-weight:700;">
+          <i class="fas fa-play"></i> Vidéo
+        </span>
+      </div>
+      {% endif %}
+      <div class="pad" style="padding:14px;flex-grow:1;display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+          <h5 style="font-weight:700;margin-bottom:4px;font-size:clamp(.88rem,2.5vw,1rem);">{{ product.name }}</h5>
+          <p style="font-size:.82rem;color:#666;margin-bottom:8px;">{{ (product.description or '')|truncate(60) }}</p>
+        </div>
+        <div>
+          <div style="font-weight:800;color:#dc2626;font-size:clamp(.95rem,3vw,1.1rem);margin-bottom:10px;">
+            {{ product.price|int }} FCFA
+          </div>
+          {% if product.stock > 0 %}
+            <a href="{{ url_for('cart.add', product_id=product.id) }}" class="add-btn">
+              <i class="fas fa-cart-plus"></i> Ajouter
+            </a>
+          {% else %}
+            <span style="display:block;background:#e5e7eb;color:#6b7280;text-align:center;padding:10px;border-radius:10px;font-size:.88rem;">
+              Rupture de stock
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;background:white;border-radius:16px;">
+    <div style="font-size:3rem;margin-bottom:12px;">🍽️</div>
+    <p style="color:#888;">Aucun produit disponible pour le moment.</p>
+  </div>
+  {% endif %}
+
+  <!-- Avis clients -->
+  <div style="margin-top:40px;">
+    <h3 class="qf-h2" style="margin-bottom:16px;">Avis clients {% if rating_avg %}· ★ {{ "%.1f"|format(rating_avg) }}{% endif %}</h3>
+    {% if reviews %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
+      {% for r in reviews %}
+      <div class="qf-card" style="padding:16px 18px;">
+        <div class="qf-stars">{{ "★" * r.rating }}{{ "☆" * (5 - r.rating) }}</div>
+        <strong style="display:block;margin:4px 0 2px;font-size:.9rem;">{{ r.user.name }}</strong>
+        {% if r.comment %}<p class="qf-muted" style="font-size:.85rem;margin:0;">{{ r.comment }}</p>{% endif %}
+        {% if r.reply %}
+        <div style="background:var(--qf-bg);border-radius:10px;padding:8px 12px;margin-top:8px;font-size:.8rem;border-left:3px solid var(--qf-primary);">
+          <strong>Réponse :</strong> {{ r.reply }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="qf-muted">Aucun avis pour le moment — soyez le premier après votre commande !</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

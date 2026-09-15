@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Suivi commande #{{ order.id }} - QuickFood{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block content %}
+<div style="max-width:700px;margin:32px auto;padding:0 16px;">
+  <a href="{{ url_for('client.orders') }}" class="qf-muted" style="text-decoration:none;font-weight:600;font-size:.85rem;">
+    <i class="fas fa-arrow-left"></i> Mes commandes
+  </a>
+  <h3 class="qf-h2" style="margin:10px 0 4px;">Commande #{{ order.id }}</h3>
+  <p class="qf-muted" style="margin-bottom:20px;">{{ order.restaurant.name if order.restaurant else '' }}</p>
+
+  <!-- Timeline -->
+  <div class="qf-timeline">
+    {% set steps = ['Confirmée','En préparation','Prête','Livreur assigné','En livraison','Livrée'] %}
+    {% set current_index = steps.index(order.status) if order.status in steps else -1 %}
+    {% for s in steps %}
+    <div class="step {{ 'done' if loop.index0 < current_index else ('current' if loop.index0 == current_index else '') }}">
+      <div class="dot"><i class="fas {{ 'fa-check' if loop.index0 <= current_index else 'fa-circle' }}"></i></div>
+      <div class="label">{{ s }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if order.driver %}
+  <div class="qf-card" style="padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--qf-primary-light);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🛵</div>
+    <div style="flex:1;">
+      <strong>{{ order.driver.user.name }}</strong>
+      <div class="qf-muted" style="font-size:.85rem;">{{ order.driver.vehicle_type }} · ⭐ {{ "%.1f"|format(order.driver.rating_avg or 5.0) }}</div>
+    </div>
+    <a href="tel:{{ order.driver.phone }}" class="qf-btn qf-btn-ghost qf-btn-sm"><i class="fas fa-phone"></i></a>
+  </div>
+
+  <div id="track-map" class="qf-map"></div>
+  {% else %}
+  <div class="qf-card" style="padding:24px;text-align:center;color:var(--qf-muted);">
+    Recherche d'un livreur disponible en cours…
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+{% if order.driver %}
+var map = L.map('track-map').setView([{{ order.driver.current_lat or 14.6928 }}, {{ order.driver.current_lng or -17.4467 }}], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+var driverMarker = L.marker([{{ order.driver.current_lat or 14.6928 }}, {{ order.driver.current_lng or -17.4467 }}]).addTo(map)
+  .bindPopup("{{ order.driver.user.name }}");
+{% if order.delivery_latitude and order.delivery_longitude %}
+L.marker([{{ order.delivery_latitude }}, {{ order.delivery_longitude }}], {
+  icon: L.divIcon({html:'📍', className:'', iconSize:[24,24]})
+}).addTo(map).bindPopup("Adresse de livraison");
+{% endif %}
+
+var socket = io();
+socket.on('connect', function () { socket.emit('watch_driver', { driver_id: {{ order.driver.id }} }); });
+socket.on('driver_location', function (data) {
+  if (data.driver_id === {{ order.driver.id }}) {
+    driverMarker.setLatLng([data.lat, data.lng]);
+    map.panTo([data.lat, data.lng]);
+  }
+});
+{% endif %}
+
+// Rafraîchit la page toutes les 30s pour suivre l'avancée du statut
+setTimeout(function(){ window.location.reload(); }, 30000);
+</script>
+{% endblock %}

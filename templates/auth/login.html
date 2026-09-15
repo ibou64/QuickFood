@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Connexion - QuickFood{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:60px auto;background:white;padding:2.5rem;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+  <h2 style="text-align:center;color:#dc2626;margin-bottom:1.5rem;font-weight:800;">Connexion</h2>
+  <form method="POST">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Email</label>
+      <input type="email" name="email" class="form-control" placeholder="votre@email.com" required autofocus>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Mot de passe</label>
+      <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+    </div>
+    <div class="mb-3 form-check">
+      <input type="checkbox" class="form-check-input" name="remember" id="remember">
+      <label class="form-check-label" for="remember">Se souvenir de moi</label>
+    </div>
+    <button type="submit" class="btn btn-danger w-100 fw-bold py-2">Se connecter</button>
+  </form>
+  <hr>
+  <p class="text-center mb-1">
+    <a href="{{ url_for('auth.register') }}">Pas encore de compte ? Inscrivez-vous</a>
+  </p>
+  <p class="text-center mb-0">
+    <a href="{{ url_for('auth.partner_register') }}">Devenir partenaire</a>
+  </p>
+</div>
+{% endblock %}

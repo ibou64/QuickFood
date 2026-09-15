@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Commande confirmée - QuickFood{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:80px auto;text-align:center;padding:0 20px;">
+  <div style="background:white;border-radius:20px;padding:50px 30px;box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+    <div style="font-size:4rem;margin-bottom:20px;">✅</div>
+    <h2 style="font-weight:800;color:#10b981;margin-bottom:12px;">Commande confirmée !</h2>
+    <p style="color:#666;margin-bottom:30px;">Votre commande a été prise en charge. Vous serez livré très bientôt.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="{{ url_for('client.orders') }}" class="btn btn-danger">Voir mes commandes</a>
+      <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">Retour à l'accueil</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

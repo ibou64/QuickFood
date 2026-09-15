@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% block title %}Accès rapide - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+  .access-hero {
+    background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
+    padding: 60px 20px 80px;
+    text-align: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .access-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .access-hero h1 { font-size: 2.6rem; font-weight: 800; margin-bottom: 10px; position: relative; }
+  .access-hero p { font-size: 1.1rem; opacity: 0.9; position: relative; }
+
+  .access-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    max-width: 1100px;
+    margin: -40px auto 60px;
+    padding: 0 24px;
+  }
+  .access-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px 24px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+    transition: transform .25s, box-shadow .25s;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-top: 4px solid var(--color, #dc2626);
+  }
+  .access-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 44px rgba(0,0,0,0.15);
+    color: inherit;
+    text-decoration: none;
+  }
+  .access-card .icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem;
+    background: var(--bg-icon, #fef2f2);
+  }
+  .access-card h3 { font-weight: 800; font-size: 1.15rem; margin: 0; }
+  .access-card p { font-size: .88rem; color: #6b7280; margin: 0; }
+  .access-card .badge-role {
+    display: inline-block;
+    font-size: .75rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--color, #dc2626); color: white;
+    width: fit-content;
+  }
+
+  .section-title {
+    max-width: 1100px; margin: 40px auto 0;
+    padding: 0 24px;
+    font-weight: 800; font-size: 1.3rem; color: #1e293b;
+  }
+  .stats-row {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    max-width: 1100px; margin: 20px auto;
+    padding: 0 24px;
+  }
+  .stat-chip {
+    background: white;
+    border-radius: 14px;
+    padding: 16px 22px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+    flex: 1 1 160px;
+    text-align: center;
+  }
+  .stat-chip .val { font-size: 1.9rem; font-weight: 800; color: #dc2626; }
+  .stat-chip .lbl { font-size: .82rem; color: #6b7280; margin-top: 2px; }
+
+  .geo-card {
+    max-width: 1100px; margin: 0 auto 60px;
+    padding: 0 24px;
+  }
+  .geo-inner {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  }
+  #map-preview {
+    width: 100%; height: 320px;
+    border-radius: 14px;
+    background: #e5e7eb;
+    overflow: hidden;
+    position: relative;
+  }
+  #map-preview iframe { width: 100%; height: 100%; border: none; border-radius: 14px; }
+  .geo-status {
+    display: flex; align-items: center; gap: 10px;
+    font-size: .9rem; color: #374151; margin-top: 12px;
+  }
+  .geo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #10b981; flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+  }
+  .geo-dot.inactive { background: #9ca3af; box-shadow: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="access-hero">
+  <h1>⚡ Tableau de bord QuickFood</h1>
+  <p>Accès rapide à tous les modules selon votre rôle</p>
+</div>
+
+<!-- Stats rapides -->
+<div class="stats-row">
+  <div class="stat-chip">
+    <div class="val">{{ total_restaurants }}</div>
+    <div class="lbl">Restaurants actifs</div>
+  </div>
+  <div class="stat-chip">
+    <div class="val">{{ total_orders }}</div>
+    <div class="lbl">Commandes totales</div>
+  </div>
+  <div class="stat-chip">
+    <div class="val">{{ total_clients }}</div>
+    <div class="lbl">Clients inscrits</div>
+  </div>
+  <div class="stat-chip">
+    <div class="val">{{ (total_revenue or 0)|int|format_number }} FCFA</div>
+    <div class="lbl">Revenu total</div>
+  </div>
+</div>
+
+<!-- Accès Client -->
+<div class="section-title">🍽️ Espace Client</div>
+<div class="access-grid">
+  <a href="{{ url_for('main.home') }}" class="access-card" style="--color:#dc2626;--bg-icon:#fef2f2;">
+    <div class="icon">🏠</div>
+    <div>
+      <h3>Accueil</h3>
+      <p>Voir les restaurants et commander</p>
+    </div>
+    <span class="badge-role">Client</span>
+  </a>
+  <a href="{{ url_for('main.restaurants') }}" class="access-card" style="--color:#f97316;--bg-icon:#fff7ed;">
+    <div class="icon">🗺️</div>
+    <div>
+      <h3>Tous les restaurants</h3>
+      <p>Parcourir les partenaires disponibles</p>
+    </div>
+    <span class="badge-role" style="background:#f97316;">Client</span>
+  </a>
+  <a href="{{ url_for('cart.view') }}" class="access-card" style="--color:#eab308;--bg-icon:#fefce8;">
+    <div class="icon">🛒</div>
+    <div>
+      <h3>Mon Panier</h3>
+      <p>Voir et confirmer votre commande</p>
+    </div>
+    <span class="badge-role" style="background:#eab308;">Client</span>
+  </a>
+  {% if current_user.is_authenticated and current_user.role == 'client' %}
+  <a href="{{ url_for('client.orders') }}" class="access-card" style="--color:#10b981;--bg-icon:#ecfdf5;">
+    <div class="icon">📋</div>
+    <div>
+      <h3>Mes commandes</h3>
+      <p>Suivre l'état de vos livraisons</p>
+    </div>
+    <span class="badge-role" style="background:#10b981;">Client</span>
+  </a>
+  <a href="{{ url_for('client.dashboard') }}" class="access-card" style="--color:#6366f1;--bg-icon:#eef2ff;">
+    <div class="icon">👤</div>
+    <div>
+      <h3>Mon compte</h3>
+      <p>Gérer votre profil et historique</p>
+    </div>
+    <span class="badge-role" style="background:#6366f1;">Client</span>
+  </a>
+  {% endif %}
+</div>
+
+<!-- Accès Partenaire -->
+{% if current_user.is_authenticated and current_user.role in ['partner', 'admin'] %}
+<div class="section-title">🏪 Espace Partenaire</div>
+<div class="access-grid">
+  <a href="{{ url_for('partner.dashboard') }}" class="access-card" style="--color:#7c3aed;--bg-icon:#f5f3ff;">
+    <div class="icon">📊</div>
+    <div>
+      <h3>Dashboard Partenaire</h3>
+      <p>Vue d'ensemble de vos restaurants</p>
+    </div>
+    <span class="badge-role" style="background:#7c3aed;">Partenaire</span>
+  </a>
+  <a href="{{ url_for('partner.add_restaurant') }}" class="access-card" style="--color:#0891b2;--bg-icon:#ecfeff;">
+    <div class="icon">➕</div>
+    <div>
+      <h3>Ajouter un restaurant</h3>
+      <p>Créer un nouvel établissement</p>
+    </div>
+    <span class="badge-role" style="background:#0891b2;">Partenaire</span>
+  </a>
+</div>
+{% endif %}
+
+<!-- Accès Admin -->
+{% if current_user.is_authenticated and current_user.is_admin %}
+<div class="section-title">⚙️ Espace Administrateur</div>
+<div class="access-grid">
+  <a href="{{ url_for('admin.dashboard') }}" class="access-card" style="--color:#1e293b;--bg-icon:#f8fafc;">
+    <div class="icon">🖥️</div>
+    <div>
+      <h3>Dashboard Admin</h3>
+      <p>Vue complète de la plateforme</p>
+    </div>
+    <span class="badge-role" style="background:#1e293b;">Admin</span>
+  </a>
+  <a href="{{ url_for('admin.orders') }}" class="access-card" style="--color:#dc2626;--bg-icon:#fef2f2;">
+    <div class="icon">📦</div>
+    <div>
+      <h3>Toutes les commandes</h3>
+      <p>Gestion et suivi des commandes</p>
+    </div>
+    <span class="badge-role">Admin</span>
+  </a>
+  <a href="{{ url_for('admin.restaurants') }}" class="access-card" style="--color:#f97316;--bg-icon:#fff7ed;">
+    <div class="icon">🍴</div>
+    <div>
+      <h3>Restaurants</h3>
+      <p>Gérer tous les partenaires</p>
+    </div>
+    <span class="badge-role" style="background:#f97316;">Admin</span>
+  </a>
+  <a href="{{ url_for('admin.users') }}" class="access-card" style="--color:#6366f1;--bg-icon:#eef2ff;">
+    <div class="icon">👥</div>
+    <div>
+      <h3>Utilisateurs</h3>
+      <p>Liste et gestion des comptes</p>
+    </div>
+    <span class="badge-role" style="background:#6366f1;">Admin</span>
+  </a>
+  <a href="{{ url_for('admin.partners') }}" class="access-card" style="--color:#7c3aed;--bg-icon:#f5f3ff;">
+    <div class="icon">🤝</div>
+    <div>
+      <h3>Partenaires</h3>
+      <p>Activation et suivi des partenaires</p>
+    </div>
+    <span class="badge-role" style="background:#7c3aed;">Admin</span>
+  </a>
+  <a href="{{ url_for('admin.stats') }}" class="access-card" style="--color:#0891b2;--bg-icon:#ecfeff;">
+    <div class="icon">📈</div>
+    <div>
+      <h3>Statistiques</h3>
+      <p>Analyses et métriques de la plateforme</p>
+    </div>
+    <span class="badge-role" style="background:#0891b2;">Admin</span>
+  </a>
+  <a href="{{ url_for('admin.commissions') }}" class="access-card" style="--color:#d97706;--bg-icon:#fffbeb;">
+    <div class="icon">💰</div>
+    <div>
+      <h3>Commissions & TVA</h3>
+      <p>Revenus, commissions 18% TVA Sénégal</p>
+    </div>
+    <span class="badge-role" style="background:#d97706;">Admin</span>
+  </a>
+</div>
+{% endif %}
+
+<!-- Géolocalisation -->
+<div class="section-title" style="margin-bottom:20px;">📍 Géolocalisation</div>
+<div class="geo-card">
+  <div class="geo-inner">
+    <h5 style="font-weight:700;margin-bottom:6px;">Restaurants autour de vous</h5>
+    <p style="color:#6b7280;font-size:.9rem;margin-bottom:18px;">
+      Activez la géolocalisation pour trouver les restaurants les plus proches.
+    </p>
+    <div class="geo-status" id="geo-status">
+      <div class="geo-dot inactive" id="geo-dot"></div>
+      <span id="geo-label">Géolocalisation non activée</span>
+      <button onclick="requestGeo()" class="btn btn-sm btn-danger ms-2" id="geo-btn">
+        <i class="fas fa-map-marker-alt"></i> Localiser
+      </button>
+    </div>
+    <div id="map-preview" style="margin-top:18px;display:none;">
+      <iframe id="map-iframe" src="" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <div id="nearby-list" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- Accès invité -->
+{% if not current_user.is_authenticated %}
+<div style="max-width:1100px;margin:0 auto 60px;padding:0 24px;">
+  <div style="background:linear-gradient(135deg,#dc2626,#7f1d1d);border-radius:20px;padding:40px;text-align:center;color:white;">
+    <h3 style="font-weight:800;margin-bottom:10px;">Rejoignez QuickFood 🚀</h3>
+    <p style="opacity:.9;margin-bottom:24px;">Créez un compte pour commander, suivre vos livraisons et profiter d'offres exclusives.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a href="{{ url_for('auth.register') }}" class="btn btn-light fw-bold px-4">S'inscrire gratuitement</a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light fw-bold px-4">Se connecter</a>
+      <a href="{{ url_for('auth.partner_register') }}" style="background:#ffc107;color:#000;font-weight:700;padding:8px 22px;border-radius:8px;text-decoration:none;">Devenir Partenaire</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function requestGeo() {
+  if (!navigator.geolocation) {
+    document.getElementById('geo-label').textContent = "Géolocalisation non supportée par votre navigateur.";
+    return;
+  }
+  document.getElementById('geo-label').textContent = "Localisation en cours…";
+  document.getElementById('geo-btn').disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const dot = document.getElementById('geo-dot');
+      dot.classList.remove('inactive');
+      document.getElementById('geo-label').textContent =
+        `Position obtenue : ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      document.getElementById('geo-btn').textContent = '🔄 Actualiser';
+      document.getElementById('geo-btn').disabled = false;
+
+      // Afficher carte OpenStreetMap
+      const mapDiv = document.getElementById('map-preview');
+      mapDiv.style.display = 'block';
+      document.getElementById('map-iframe').src =
+        `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.05},${lat-0.05},${lng+0.05},${lat+0.05}&layer=mapnik&marker=${lat},${lng}`;
+
+      // Charger restaurants proches
+      fetch(`/api/restaurants/nearby?lat=${lat}&lng=${lng}&radius=10`)
+        .then(r => r.json())
+        .then(data => {
+          const list = document.getElementById('nearby-list');
+          if (!data.length) {
+            list.innerHTML = '<p style="color:#888;text-align:center;">Aucun restaurant trouvé dans un rayon de 10 km.</p>';
+            return;
+          }
+          list.innerHTML = '<h6 style="font-weight:700;margin-bottom:12px;">🍽️ Restaurants proches</h6>' +
+            data.map(r => `
+              <div style="display:flex;align-items:center;gap:14px;background:#f9fafb;border-radius:12px;padding:12px;margin-bottom:10px;">
+                <div style="font-size:1.8rem;">🍴</div>
+                <div style="flex-grow:1;">
+                  <div style="font-weight:700;">${r.name}</div>
+                  <div style="font-size:.85rem;color:#6b7280;">${r.address || 'Adresse non renseignée'}</div>
+                </div>
+                ${r.distance_km !== null ? `<span style="background:#dc2626;color:white;border-radius:20px;padding:3px 10px;font-size:.8rem;font-weight:700;">${r.distance_km} km</span>` : ''}
+                <a href="/restaurant/${r.id}" style="background:#dc2626;color:white;padding:7px 14px;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:600;">Voir</a>
+              </div>
+            `).join('');
+        })
+        .catch(() => {
+          document.getElementById('nearby-list').innerHTML =
+            '<p style="color:#dc2626;">Impossible de charger les restaurants.</p>';
+        });
+    },
+    function(err) {
+      document.getElementById('geo-dot').classList.add('inactive');
+      document.getElementById('geo-label').textContent = "Accès à la localisation refusé.";
+      document.getElementById('geo-btn').disabled = false;
+    }
+  );
+}
+</script>
+{% endblock %}

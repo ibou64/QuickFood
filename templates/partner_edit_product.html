@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_img %}
+{% block title %}Modifier produit - QuickFood{% endblock %}
+
+{% block extra_css %}
+<style>
+  .photo-zone { border:2px dashed #e5e7eb; border-radius:16px; padding:20px; background:#fafafa; transition:.2s; }
+  .photo-zone:hover { border-color:#dc2626; background:#fef2f2; }
+  .photo-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    border:none; border-radius:14px; cursor:pointer; padding:16px 12px; flex:1; min-width:120px;
+    font-family:inherit; transition:.2s; }
+  .photo-btn:hover { transform:translateY(-2px); }
+  .btn-camera  { background:#fef2f2; color:#dc2626; }
+  .btn-gallery { background:#eff6ff; color:#2563eb; }
+  .btn-camera:hover  { background:#fee2e2; }
+  .btn-gallery:hover { background:#dbeafe; }
+  #preview-wrap { display:none; position:relative; border-radius:14px; overflow:hidden; margin-top:14px; max-height:280px; }
+  #preview-wrap img { width:100%; max-height:280px; object-fit:cover; display:block; border-radius:14px; }
+  #preview-remove { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.55); color:white;
+    border:none; border-radius:50%; width:32px; height:32px; font-size:1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; }
+  #camera-wrap { display:none; margin-top:14px; border-radius:14px; overflow:hidden; position:relative; }
+  #camera-video { width:100%; max-height:300px; object-fit:cover; display:block; border-radius:14px; background:#000; }
+  #btn-snap { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+    background:#dc2626; color:white; border:4px solid white; width:62px; height:62px;
+    border-radius:50%; font-size:1.5rem; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.35);
+    display:flex; align-items:center; justify-content:center; transition:.15s; }
+  #btn-snap:hover { background:#b91c1c; transform:translateX(-50%) scale(1.08); }
+  #btn-cam-close { position:absolute; top:10px; right:10px; background:rgba(0,0,0,.5); color:white;
+    border:none; border-radius:50%; width:34px; height:34px; font-size:.95rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; }
+  #cam-status { font-size:.8rem; color:#6b7280; margin-top:8px; min-height:18px; text-align:center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;margin:50px auto;padding:0 20px;">
+  <a href="{{ url_for('partner.products', restaurant_id=product.restaurant_id) }}"
+     style="color:#dc2626;text-decoration:none;font-weight:600;">
+    <i class="fas fa-arrow-left"></i> Retour
+  </a>
+
+  <div style="background:white;border-radius:16px;padding:30px;box-shadow:0 8px 24px rgba(0,0,0,0.08);margin-top:20px;">
+    <h3 style="font-weight:800;color:#dc2626;margin-bottom:25px;">Modifier : {{ product.name }}</h3>
+
+    <form method="POST" enctype="multipart/form-data">
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nom *</label>
+        <input type="text" name="name" class="form-control" value="{{ product.name }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Description</label>
+        <textarea name="description" class="form-control" rows="3">{{ product.description or '' }}</textarea>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-semibold">Prix (FCFA) *</label>
+          <input type="number" name="price" class="form-control" value="{{ product.price }}" required min="0" step="50">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-semibold">Stock</label>
+          <input type="number" name="stock" class="form-control" value="{{ product.stock }}" min="0">
+        </div>
+      </div>
+
+      <!-- Zone photo -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">
+          Photo du produit
+          <span style="font-weight:400;color:#9ca3af;font-size:.85rem;">(optionnel)</span>
+        </label>
+
+        <!-- Photo actuelle -->
+        {% if product.image %}
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#f8fafc;border-radius:10px;padding:10px;">
+          <div style="width:64px;height:64px;border-radius:8px;overflow:hidden;flex-shrink:0;">
+            {{ product_img(product, height='64px', radius='8px') }}
+          </div>
+          <div>
+            <div style="font-size:.85rem;font-weight:600;color:#374151;">Photo actuelle</div>
+            <div style="font-size:.78rem;color:#9ca3af;">Prendre/choisir une nouvelle photo pour remplacer</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="photo-zone">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="button" class="photo-btn btn-camera" onclick="openCamera()">
+              <i class="fas fa-camera" style="font-size:2rem;"></i>
+              <span style="font-size:.82rem;font-weight:700;">Prendre une photo</span>
+              <span style="font-size:.72rem;color:#ef4444;opacity:.8;">Caméra</span>
+            </button>
+            <button type="button" class="photo-btn btn-gallery"
+                    onclick="document.getElementById('file-input').click()">
+              <i class="fas fa-images" style="font-size:2rem;"></i>
+              <span style="font-size:.82rem;font-weight:700;">Depuis la galerie</span>
+              <span style="font-size:.72rem;color:#3b82f6;opacity:.8;">Fichiers</span>
+            </button>
+          </div>
+
+          <input type="file" id="file-input" name="image" accept="image/*"
+                 style="display:none" onchange="previewFile(this)">
+          <input type="hidden" name="image_data" id="image-data">
+
+          <div id="camera-wrap">
+            <video id="camera-video" autoplay playsinline muted></video>
+            <button type="button" id="btn-snap" onclick="snapPhoto()">
+              <i class="fas fa-circle"></i>
+            </button>
+            <button type="button" id="btn-cam-close" onclick="closeCamera()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="cam-status"></div>
+          <canvas id="snap-canvas" style="display:none;"></canvas>
+
+          <div id="preview-wrap">
+            <img id="preview-img" src="" alt="Aperçu">
+            <button type="button" id="preview-remove" onclick="removePhoto()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone Vidéo -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">
+          Vidéo du produit
+          <span style="font-weight:400;color:#9ca3af;font-size:.85rem;">(optionnel)</span>
+        </label>
+
+        {% if product.video_file or product.video_url %}
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+          <i class="fas fa-film" style="color:#16a34a;font-size:1.2rem;"></i>
+          <div style="flex:1;">
+            <div style="font-weight:700;color:#15803d;font-size:.88rem;">Vidéo actuelle</div>
+            {% if product.video_url %}
+            <div style="font-size:.78rem;color:#166534;">{{ product.video_url|truncate(50) }}</div>
+            {% else %}
+            <div style="font-size:.78rem;color:#166534;">Fichier uploadé</div>
+            {% endif %}
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:#dc2626;cursor:pointer;">
+            <input type="checkbox" name="remove_video" value="1"> Supprimer
+          </label>
+        </div>
+        {% endif %}
+
+        <div style="display:flex;gap:0;margin-bottom:14px;border-radius:12px;overflow:hidden;border:2px solid #e5e7eb;">
+          <button type="button" id="tab-upload" onclick="switchVideoTab('upload')"
+            style="flex:1;padding:10px;border:none;background:#dc2626;color:white;font-weight:700;font-size:.88rem;cursor:pointer;">
+            <i class="fas fa-upload"></i> Uploader
+          </button>
+          <button type="button" id="tab-link" onclick="switchVideoTab('link')"
+            style="flex:1;padding:10px;border:none;background:#f1f5f9;color:#374151;font-weight:700;font-size:.88rem;cursor:pointer;">
+            <i class="fab fa-youtube"></i> Lien externe
+          </button>
+        </div>
+
+        <div id="panel-upload" style="border:2px dashed #e5e7eb;border-radius:14px;padding:18px;background:#fafafa;text-align:center;">
+          <input type="file" name="video" id="video-file-input" accept="video/mp4,video/webm,video/quicktime" style="display:none;" onchange="previewVideo(this)">
+          <button type="button" onclick="document.getElementById('video-file-input').click()"
+            style="background:#dc2626;color:white;border:none;border-radius:25px;padding:9px 22px;font-weight:700;cursor:pointer;font-size:.88rem;">
+            <i class="fas fa-folder-open"></i> Choisir (MP4/WebM — 50Mo max)
+          </button>
+          <div id="video-preview-wrap" style="display:none;margin-top:14px;">
+            <video id="video-preview" controls style="width:100%;max-height:220px;border-radius:12px;"></video>
+            <button type="button" onclick="removeVideo()" style="margin-top:8px;background:none;border:1px solid #dc2626;color:#dc2626;border-radius:20px;padding:3px 12px;font-size:.82rem;cursor:pointer;">
+              <i class="fas fa-times"></i> Supprimer
+            </button>
+          </div>
+        </div>
+
+        <div id="panel-link" style="display:none;">
+          <div style="border-radius:14px;border:2px solid #e5e7eb;padding:18px;background:#fafafa;">
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+              <span style="background:#ff0000;color:white;border-radius:8px;padding:3px 8px;font-size:.75rem;font-weight:700;"><i class="fab fa-youtube"></i> YouTube</span>
+              <span style="background:#000;color:white;border-radius:8px;padding:3px 8px;font-size:.75rem;font-weight:700;"><i class="fab fa-tiktok"></i> TikTok</span>
+            </div>
+            <input type="url" name="video_url" id="video-url-input" class="form-control"
+              placeholder="https://youtube.com/watch?v=... ou https://tiktok.com/..."
+              value="{{ product.video_url or '' }}"
+              oninput="previewEmbed(this.value)">
+            <div id="video-status" style="font-size:.8rem;margin-top:6px;min-height:16px;"></div>
+          </div>
+          <div id="embed-preview-wrap" style="{% if product.video_embed_url %}display:block{% else %}display:none{% endif %};margin-top:12px;">
+            <iframe id="embed-preview" src="{{ product.video_embed_url or '' }}" frameborder="0" allowfullscreen
+              style="width:100%;height:200px;border-radius:12px;background:#000;"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-danger w-100 fw-bold py-2">
+        <i class="fas fa-save"></i> Enregistrer les modifications
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var stream = null;
+function openCamera() {
+  var wrap=document.getElementById('camera-wrap'), video=document.getElementById('camera-video'), status=document.getElementById('cam-status');
+  status.textContent='Activation de la caméra...';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}})
+    .then(function(s){stream=s;video.srcObject=s;wrap.style.display='block';status.textContent='';document.getElementById('preview-wrap').style.display='none';})
+    .catch(function(err){
+      if(err.name==='NotAllowedError') status.innerHTML='<span style="color:#dc2626;"><i class="fas fa-exclamation-circle"></i> Accès caméra refusé — utilisez la galerie.</span>';
+      else if(err.name==='NotFoundError') status.innerHTML='<span style="color:#f59e0b;"><i class="fas fa-exclamation-triangle"></i> Aucune caméra détectée.</span>';
+      else status.innerHTML='<span style="color:#dc2626;">Erreur : '+err.message+'</span>';
+    });
+}
+function snapPhoto() {
+  var video=document.getElementById('camera-video'), canvas=document.getElementById('snap-canvas');
+  canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
+  canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+  var dataURL=canvas.toDataURL('image/jpeg',0.88);
+  document.getElementById('image-data').value=dataURL;
+  showPreview(dataURL); closeCamera();
+  document.getElementById('cam-status').innerHTML='<span style="color:#10b981;"><i class="fas fa-check-circle"></i> Photo prise !</span>';
+  setTimeout(function(){document.getElementById('cam-status').textContent='';},2500);
+}
+function closeCamera() {
+  if(stream){stream.getTracks().forEach(function(t){t.stop()});stream=null;}
+  document.getElementById('camera-wrap').style.display='none';
+  document.getElementById('camera-video').srcObject=null;
+}
+function previewFile(input) {
+  if(!input.files||!input.files[0])return;
+  var reader=new FileReader();
+  reader.onload=function(e){showPreview(e.target.result);document.getElementById('image-data').value='';};
+  reader.readAsDataURL(input.files[0]); closeCamera();
+}
+function showPreview(src) {
+  document.getElementById('preview-img').src=src;
+  document.getElementById('preview-wrap').style.display='block';
+}
+function removePhoto() {
+  document.getElementById('preview-wrap').style.display='none';
+  document.getElementById('preview-img').src='';
+  document.getElementById('image-data').value='';
+  document.getElementById('file-input').value='';
+  document.getElementById('cam-status').textContent='';
+}
+window.addEventListener('beforeunload',closeCamera);
+</script>
+{% endblock %}

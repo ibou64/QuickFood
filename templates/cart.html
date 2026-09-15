@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_img %}
+{% block title %}Mon Panier - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+.cart-item  { background:white;border-radius:14px;padding:14px;display:flex;align-items:center;
+              gap:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:12px;flex-wrap:wrap; }
+.cart-thumb { width:72px;height:72px;border-radius:10px;overflow:hidden;flex-shrink:0; }
+.cart-info  { flex:1;min-width:100px; }
+.qty-ctrl   { display:flex;align-items:center;gap:8px;background:#f3f4f6;padding:5px 10px;border-radius:10px; }
+.qty-btn    { background:white;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;
+              justify-content:center;text-decoration:none;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.1); }
+.summary-box{ background:white;border-radius:18px;padding:24px;box-shadow:0 10px 28px rgba(0,0,0,.08); }
+
+@media(max-width:640px){
+  .cart-item { gap:10px;padding:12px; }
+  .cart-thumb { width:60px;height:60px; }
+  .cart-price-col { display:none; }  /* masquer colonne total sur mobile */
+  .summary-box { position:static !important; margin-top:20px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:32px auto;padding:0 clamp(10px,3vw,20px);">
+  <h3 style="font-weight:800;margin-bottom:20px;">🛒 Mon Panier</h3>
+
+  <div class="row g-4">
+    <!-- Items -->
+    <div class="col-lg-8">
+      {% if cart %}
+        {% for pid, item in cart.items() %}
+        <div class="cart-item">
+          <div class="cart-thumb">
+            {% if item.get('image') %}
+              <img src="{{ url_for('static', filename='uploads/' + item['image']) }}"
+                   style="width:100%;height:100%;object-fit:cover;" alt="{{ item['name'] }}"
+                   onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+              <div style="display:none;width:100%;height:100%;background:#fef2f2;align-items:center;justify-content:center;font-size:1.5rem;">🍽️</div>
+            {% else %}
+              <div style="display:flex;width:100%;height:100%;background:#fef2f2;align-items:center;justify-content:center;font-size:1.5rem;">🍽️</div>
+            {% endif %}
+          </div>
+
+          <div class="cart-info">
+            <div style="font-weight:700;font-size:clamp(.88rem,2.5vw,1rem);">{{ item['name'] }}</div>
+            <div style="color:#dc2626;font-weight:700;font-size:.9rem;">{{ item['price']|int }} FCFA</div>
+          </div>
+
+          <div class="qty-ctrl">
+            <a href="{{ url_for('cart.decrease', product_id=pid) }}" class="qty-btn" style="color:#333;">−</a>
+            <span style="font-weight:700;min-width:18px;text-align:center;">{{ item['quantity'] }}</span>
+            <a href="{{ url_for('cart.increase', product_id=pid) }}" class="qty-btn"
+               style="background:#dc2626;color:white;">+</a>
+          </div>
+
+          <div class="cart-price-col" style="font-weight:700;color:#333;min-width:80px;text-align:right;font-size:.9rem;">
+            {{ (item['price'] * item['quantity'])|int }} FCFA
+          </div>
+
+          <a href="{{ url_for('cart.remove', product_id=pid) }}"
+             style="color:#dc2626;font-size:1.1rem;text-decoration:none;padding:4px;" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </a>
+        </div>
+        {% endfor %}
+
+        <a href="{{ url_for('cart.clear') }}" style="color:#9ca3af;font-size:.88rem;text-decoration:none;"
+           onclick="return confirm('Vider le panier ?')">
+          <i class="fas fa-trash"></i> Vider le panier
+        </a>
+      {% else %}
+        <div style="text-align:center;padding:60px 20px;background:white;border-radius:16px;">
+          <div style="font-size:4rem;margin-bottom:12px;">🛒</div>
+          <h5>Votre panier est vide</h5>
+          <a href="{{ url_for('main.home') }}" class="btn btn-danger mt-3">Voir les commerces</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Summary -->
+    <div class="col-lg-4">
+      <div class="summary-box" style="position:sticky;top:90px;">
+        <h4 style="font-weight:800;margin-bottom:18px;">Résumé</h4>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+          <span>Sous-total</span>
+          <strong>{{ (subtotal or 0)|int }} FCFA</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+          <span>Livraison estimée</span>
+          <strong>{{ delivery_fee|int }} FCFA</strong>
+        </div>
+
+        {% if discount %}
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;color:var(--qf-success);">
+          <span><i class="fas fa-tag"></i> Code {{ promo_code }}</span>
+          <strong>− {{ discount|int }} FCFA</strong>
+        </div>
+        {% endif %}
+
+        {% if cart %}
+        {% if promo_code %}
+        <form method="POST" action="{{ url_for('cart.remove_promo') }}" style="margin-bottom:16px;">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="qf-btn qf-btn-ghost qf-btn-sm qf-btn-block">
+            <i class="fas fa-times"></i> Retirer le code {{ promo_code }}
+          </button>
+        </form>
+        {% else %}
+        <form method="POST" action="{{ url_for('cart.apply_promo') }}" class="qf-promo-box" style="margin-bottom:16px;">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <input type="text" name="promo_code" placeholder="Code promo" style="text-transform:uppercase;">
+          <button type="submit" class="qf-btn qf-btn-dark qf-btn-sm">Appliquer</button>
+        </form>
+        {% endif %}
+        {% endif %}
+
+        <div style="background:#fef2f2;border-radius:8px;padding:8px 12px;font-size:.8rem;color:#6b7280;margin-bottom:14px;">
+          <i class="fas fa-info-circle" style="color:#dc2626;"></i>
+          Les frais exacts sont calculés selon votre position GPS lors de la commande.
+        </div>
+        <hr>
+        <div style="display:flex;justify-content:space-between;margin-bottom:20px;">
+          <h5 style="margin:0;">Total</h5>
+          <h5 style="margin:0;color:#dc2626;">{{ (total or 0)|int }} FCFA</h5>
+        </div>
+        {% if cart %}
+          <a href="{{ url_for('cart.confirm_order') }}"
+             style="display:block;background:#dc2626;color:white;text-align:center;padding:14px;
+                    border-radius:12px;text-decoration:none;font-weight:700;font-size:1rem;">
+            Confirmer la commande 🚀
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

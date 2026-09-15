@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <title>{% block title %}QuickFood{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/modern.css') }}" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #dc2626;
+      --primary-dark: #b91c1c;
+      --accent: #ffc107;
+      --bg: #f8f9fa;
+    }
+    body { font-family:'Inter',sans-serif; background:var(--bg); margin:0; }
+    .qf-nav {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 50px; background:white;
+      box-shadow:0 3px 16px rgba(0,0,0,0.07); position:sticky; top:0; z-index:200;
+    }
+    .qf-nav a { text-decoration:none; font-weight:600; color:#333; margin-left:18px; transition:.2s; }
+    .qf-nav a:hover { color:var(--primary); }
+    .qf-nav .logo img { height:42px; }
+    .cart-pill { background:var(--primary); color:white!important; border-radius:20px; padding:5px 14px; font-size:.85rem; font-weight:700; }
+    .cart-pill:hover { background:var(--primary-dark)!important; }
+    .access-pill { background:#1e293b; color:white!important; border-radius:20px; padding:5px 14px; font-size:.85rem; font-weight:700; }
+    .access-pill:hover { background:#0f172a!important; }
+    #burger { display:none; font-size:1.5rem; cursor:pointer; background:none; border:none; }
+    @media(max-width:768px){
+      .qf-nav { padding:14px 20px; }
+      #burger { display:block; }
+      #nav-links { display:none; flex-direction:column; position:absolute;
+        top:66px; left:0; right:0; background:white; padding:15px;
+        box-shadow:0 5px 15px rgba(0,0,0,0.1); z-index:200; }
+      #nav-links.open { display:flex; }
+      #nav-links a { margin:6px 0; }
+    }
+    .flash-container { max-width:900px; margin:15px auto; padding:0 20px; }
+    .flash { padding:12px 18px; border-radius:10px; margin-bottom:8px; font-weight:600; }
+    .flash.success { background:#d1fae5; color:#065f46; }
+    .flash.danger  { background:#fee2e2; color:#991b1b; }
+    .flash.warning { background:#fef3c7; color:#92400e; }
+    .flash.info    { background:#dbeafe; color:#1e40af; }
+
+    /* ── Splash Screen PWA ─────────────────────────── */
+    #qf-splash {
+      position:fixed; inset:0; z-index:99999;
+      background:#dc2626;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      transition:opacity .6s ease;
+    }
+    #qf-splash.hidden { opacity:0; pointer-events:none; }
+    #qf-splash img {
+      width:80px; height:80px;
+      border-radius:18px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.25);
+      animation:splashPop .5s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    #qf-splash .tagline {
+      color:rgba(255,255,255,.85);
+      font-size:.95rem; font-weight:600;
+      margin-top:14px; letter-spacing:.5px;
+    }
+    #qf-splash .progress-bar {
+      width:120px; height:3px;
+      background:rgba(255,255,255,.25);
+      border-radius:99px; margin-top:28px; overflow:hidden;
+    }
+    #qf-splash .progress-fill {
+      height:100%; width:0%;
+      background:white; border-radius:99px;
+      transition:width 4s linear;
+    }
+    @keyframes splashPop {
+      0%   { transform:scale(.6); opacity:0; }
+      100% { transform:scale(1);  opacity:1; }
+    }
+
+    footer { background:var(--primary); color:white; text-align:center; padding:25px 20px; margin-top:60px; font-weight:500; }
+  </style>
+  <!-- PWA — Installable sur mobile -->
+  <!-- Désactiver splash screen natif : fond rouge immédiat -->
+  <style>
+    html { background:#dc2626 !important; }
+    body { background:#f8f9fa; }
+  </style>
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#dc2626">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="QuickFood">
+  <!-- Icônes Apple (iOS) -->
+  <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/static/icons/icon-512x512.png">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16x16.png">
+  <!-- Splash screen couleur -->
+  <meta name="msapplication-TileColor" content="#dc2626">
+  <meta name="msapplication-TileImage" content="/static/icons/icon-144x144.png">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Splash Screen ─────────────────────────────────── -->
+<div id="qf-splash">
+  <img src="/static/icons/icon-192x192.png" alt="QuickFood">
+  <div class="tagline">Livraison rapide à Dakar 🇸🇳</div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="splash-progress"></div>
+  </div>
+</div>
+<script>
+(function() {
+  var splash = document.getElementById('qf-splash');
+  var fill   = document.getElementById('splash-progress');
+
+  // Splash uniquement en mode app installée (standalone)
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+
+  if (!isStandalone) {
+    splash.style.display = 'none';
+    return;
+  }
+
+  // Vérifier si le splash a déjà été affiché depuis le dernier VRAI démarrage
+  // On utilise sessionStorage : vidé à chaque fermeture complète de l app
+  // Ainsi : 1er lancement → splash affiché / navigation interne → pas de splash
+  var splashKey = 'qf_splash_done';
+  if (sessionStorage.getItem(splashKey)) {
+    splash.style.display = 'none';
+    return;
+  }
+
+  // Marquer comme affiché pour toute la session
+  sessionStorage.setItem(splashKey, '1');
+
+  // Lancer la barre de progression
+  setTimeout(function() { fill.style.width = '100%'; }, 50);
+
+  // Masquer après 4 secondes
+  setTimeout(function() {
+    splash.classList.add('hidden');
+    setTimeout(function() { splash.style.display = 'none'; }, 650);
+  }, 4000);
+})();
+</script>
+
+
+<nav class="qf-nav">
+  <div class="logo">
+    <a href="{{ url_for('main.home') }}">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="QuickFood">
+    </a>
+  </div>
+  <button id="burger" aria-label="Menu">&#9776;</button>
+  <div id="nav-links">
+    <a href="{{ url_for('main.home') }}">Accueil</a>
+    <a href="{{ url_for('main.restaurants') }}">Restaurants</a>
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('cart.view') }}" class="cart-pill">
+        <i class="fas fa-shopping-cart"></i> Panier{% if cart_count %} ({{ cart_count }}){% endif %}
+      </a>
+      <a href="{{ url_for('main.access_page') }}" class="access-pill">
+        <i class="fas fa-th-large"></i> Accès
+      </a>
+      <span style="position:relative;display:inline-block;">
+        <button id="qf-bell-btn" class="qf-bell" type="button" aria-label="Notifications">
+          <i class="fas fa-bell"></i>
+          <span id="qf-bell-dot" class="qf-bell-dot" style="display:none;">0</span>
+        </button>
+        <div id="qf-notif-panel" class="qf-notif-panel"></div>
+      </span>
+      {% if current_user.role == 'client' %}
+        <a href="{{ url_for('client.dashboard') }}">Mon compte</a>
+        <a href="{{ url_for('client.orders') }}">Mes commandes</a>
+      {% elif current_user.role == 'partner' %}
+        <a href="{{ url_for('partner.dashboard') }}">Dashboard</a>
+      {% elif current_user.role == 'driver' %}
+        <a href="{{ url_for('driver.dashboard') }}"><i class="fas fa-motorcycle"></i> Mes livraisons</a>
+      {% elif current_user.is_admin %}
+        <a href="{{ url_for('admin.dashboard') }}">Admin</a>
+      {% endif %}
+      <a href="{{ url_for('support.index') }}"><i class="fas fa-headset"></i> Support</a>
+      <a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}">Connexion</a>
+      <a href="{{ url_for('auth.register') }}">Inscription</a>
+      <a href="{{ url_for('main.access_page') }}" class="access-pill">
+        <i class="fas fa-th-large"></i> Accès rapide
+      </a>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, msg in messages %}
+      <div class="flash {{ category }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<footer>
+  <div style="margin-bottom:10px;">
+    &copy; 2026 QuickFood — Livraison rapide au Sénégal 🇸🇳
+  </div>
+  <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:.85rem;">
+    <a href="{{ url_for('main.access_page') }}" style="color:rgba(255,255,255,.8);text-decoration:none;">
+      <i class="fas fa-th-large"></i> Accès rapide
+    </a>
+    <a href="{{ url_for('main.cgu') }}" style="color:rgba(255,255,255,.8);text-decoration:none;">
+      <i class="fas fa-file-contract"></i> CGU Clients
+    </a>
+    <a href="{{ url_for('main.cgu') }}#partner" style="color:rgba(255,255,255,.8);text-decoration:none;">
+      <i class="fas fa-handshake"></i> CGU Partenaires
+    </a>
+    <a href="{{ url_for('support.index') }}" style="color:rgba(255,255,255,.8);text-decoration:none;">
+      <i class="fas fa-envelope"></i> Contact
+    </a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const burger = document.getElementById('burger');
+  const nav = document.getElementById('nav-links');
+  if(burger) burger.addEventListener('click', () => nav.classList.toggle('open'));
+
+  // Auto-dismiss flash messages after 4s
+  setTimeout(() => {
+    document.querySelectorAll('.flash').forEach(el => {
+      el.style.transition = 'opacity .5s';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 500);
+    });
+  }, 4000);
+</script>
+{% block extra_js %}{% endblock %}
+
+{% if current_user.is_authenticated %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"
+       data-user-id="{{ current_user.id }}"></script>
+{% endif %}
+
+<!-- ── Bouton Support flottant ──────────────────────── -->
+<a href="{{ url_for('support.index') }}" id="support-fab"
+   title="Support QuickFood"
+   style="position:fixed;bottom:24px;right:24px;z-index:9998;
+          background:#dc2626;color:white;width:56px;height:56px;
+          border-radius:50%;display:flex;align-items:center;justify-content:center;
+          text-decoration:none;box-shadow:0 4px 20px rgba(220,38,38,.4);
+          font-size:1.3rem;transition:.3s;">
+  <i class="fas fa-headset"></i>
+</a>
+<style>
+#support-fab:hover { transform:scale(1.12); box-shadow:0 6px 28px rgba(220,38,38,.55); }
+@media(max-width:640px){ #support-fab { bottom:16px;right:16px;width:50px;height:50px;font-size:1.1rem; } }
+</style>
+
+<!-- Bandeau installation PWA -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;
+  background:white;border-top:3px solid #dc2626;padding:14px 20px;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.15);display:none;align-items:center;gap:14px;flex-wrap:wrap;">
+  <img src="/static/icons/icon-72x72.png" style="width:44px;height:44px;border-radius:10px;">
+  <div style="flex:1;min-width:160px;">
+    <div style="font-weight:800;font-size:.95rem;color:#1e293b;">Installer QuickFood</div>
+    <div style="font-size:.8rem;color:#6b7280;">Accès rapide depuis votre écran d'accueil</div>
+  </div>
+  <button id="pwa-install-btn" style="background:#dc2626;color:white;border:none;border-radius:10px;
+    padding:10px 20px;font-weight:700;font-size:.88rem;cursor:pointer;white-space:nowrap;">
+    <i class="fas fa-download"></i> Installer
+  </button>
+  <button onclick="document.getElementById('pwa-banner').style.display='none'"
+    style="background:none;border:none;color:#9ca3af;font-size:1.2rem;cursor:pointer;padding:4px;">✕</button>
+</div>
+
+<script>
+// ── Service Worker ──────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(function(reg) { console.log('SW QuickFood enregistré'); })
+      .catch(function(err) { console.log('SW erreur:', err); });
+  });
+}
+
+// ── Bandeau installation ────────────────────────────────
+var deferredPrompt = null;
+var banner = document.getElementById('pwa-banner');
+var installBtn = document.getElementById('pwa-install-btn');
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Afficher le bandeau après 3 secondes
+  setTimeout(function() {
+    if (banner) banner.style.display = 'flex';
+  }, 3000);
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(result) {
+      if (result.outcome === 'accepted') {
+        if (banner) banner.style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+  });
+}
+
+// Masquer si déjà installée
+window.addEventListener('appinstalled', function() {
+  if (banner) banner.style.display = 'none';
+  deferredPrompt = null;
+});
+</script>
+</body>
+</html>

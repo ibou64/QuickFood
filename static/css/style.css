@@ -1,0 +1,17 @@
+/* QuickFood - Global Styles */
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --accent: #ffc107;
+  --bg: #f8f9fa;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: #333; }
+img { max-width: 100%; }
+a { color: var(--primary); }
+.btn-primary-qf {
+  background: var(--primary); color: white; border: none;
+  padding: 10px 22px; border-radius: 25px; font-weight: 700;
+  cursor: pointer; transition: .2s; text-decoration: none; display: inline-block;
+}
+.btn-primary-qf:hover { background: var(--primary-dark); color: white; }

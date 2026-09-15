@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Statistiques - Admin{% endblock %}
+{% block content %}
+<div style="background:#1e293b;padding:14px 40px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+  <span style="color:white;font-weight:800;font-size:1rem;margin-right:10px;"><i class="fas fa-bolt"></i> Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Utilisateurs</a>
+  <a href="{{ url_for('admin.partners') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Partenaires</a>
+  <a href="{{ url_for('admin.restaurants') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Restaurants</a>
+  <a href="{{ url_for('admin.orders') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Commandes</a>
+  <a href="{{ url_for('admin.deliveries') }}" style="color:#38bdf8;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livraisons</a>
+  <a href="{{ url_for('support.admin_tickets') }}" style="color:#a78bfa;text-decoration:none;font-weight:600;font-size:.9rem;">💬 Support</a>
+  <a href="{{ url_for('admin.stats') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Statistiques</a>
+  <a href="{{ url_for('admin.commissions') }}" style="color:#fbbf24;text-decoration:none;font-weight:600;font-size:.9rem;">💰 Commissions</a>
+  <a href="{{ url_for('admin.drivers') }}" style="color:#34d399;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livreurs</a>
+  <a href="{{ url_for('admin.promos') }}" style="color:#f472b6;text-decoration:none;font-weight:600;font-size:.9rem;">🏷️ Promos</a>
+  <a href="{{ url_for('admin.reviews') }}" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:.9rem;">⭐ Avis</a>
+  <a href="{{ url_for('auth.logout') }}" style="margin-left:auto;color:#f87171;text-decoration:none;font-weight:600;font-size:.9rem;">Déconnexion</a>
+</div>
+<div style="max-width:1100px;margin:40px auto;padding:0 20px;">
+  <h3 style="font-weight:800;margin-bottom:30px;">Statistiques globales 📊</h3>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:18px;margin-bottom:40px;">
+    {% for label, value, color in [
+      ('Clients', total_users, '#3b82f6'),
+      ('Partenaires', total_partners, '#8b5cf6'),
+      ('Commandes', total_orders, '#f59e0b'),
+      ('En attente', pending_orders, '#f97316'),
+      ('Livrées', delivered_orders, '#10b981'),
+      ('Annulées', cancelled_orders, '#ef4444'),
+    ] %}
+    <div style="background:white;border-radius:14px;padding:20px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.07);">
+      <div style="font-size:2rem;font-weight:800;color:{{ color }};">{{ value }}</div>
+      <div style="color:#6b7280;font-size:.88rem;margin-top:4px;">{{ label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 8px 22px rgba(0,0,0,0.07);margin-bottom:30px;">
+    <h5 style="font-weight:700;margin-bottom:5px;">Revenus totaux</h5>
+    <div style="font-size:2.5rem;font-weight:800;color:#dc2626;">{{ total_revenue|int }} <span style="font-size:1rem;color:#888;">FCFA</span></div>
+  </div>
+
+  <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 8px 22px rgba(0,0,0,0.07);">
+    <h5 style="font-weight:700;margin-bottom:18px;">🏆 Top 5 produits vendus</h5>
+    {% for p in top_products %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">
+      <span style="font-weight:600;">{{ p.name }}</span>
+      <span style="background:#fee2e2;color:#dc2626;padding:4px 14px;border-radius:20px;font-weight:700;">{{ p.quantity_sold }} vendus</span>
+    </div>
+    {% endfor %}
+    {% if not top_products %}<p class="text-muted">Pas encore de données.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Mes commandes - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+.order-card { background:white;border-radius:16px;padding:clamp(14px,3vw,20px);
+              box-shadow:0 6px 18px rgba(0,0,0,.07);margin-bottom:14px; }
+.order-header { display:flex;justify-content:space-between;align-items:center;
+                flex-wrap:wrap;gap:8px;margin-bottom:10px; }
+.order-items  { font-size:.88rem;color:#374151;margin:8px 0; }
+.order-footer { display:flex;justify-content:space-between;align-items:center;
+                flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9; }
+@media(max-width:480px){
+  .order-header { flex-direction:column;align-items:flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;margin:clamp(20px,5vw,50px) auto;padding:0 clamp(10px,3vw,20px);">
+  <h2 style="font-weight:800;margin-bottom:22px;font-size:clamp(1.2rem,4vw,1.6rem);">Mes commandes 📋</h2>
+
+  {% if orders %}
+  {% for order in orders %}
+  <div class="order-card">
+    <div class="order-header">
+      <div>
+        <span style="font-weight:800;font-size:clamp(.9rem,2.5vw,1.05rem);">Commande #{{ order.id }}</span>
+        <div style="font-size:.82rem;color:#6b7280;margin-top:2px;">
+          {{ order.restaurant.name if order.restaurant else 'N/A' }} ·
+          {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}
+        </div>
+      </div>
+      {% if order.status == 'Livrée' %}<span class="badge bg-success">{{ order.status }}</span>
+      {% elif order.status == 'Annulée' %}<span class="badge bg-danger">{{ order.status }}</span>
+      {% elif order.status == 'En attente' %}<span class="badge bg-warning text-dark">{{ order.status }}</span>
+      {% else %}<span class="badge bg-info">{{ order.status }}</span>{% endif %}
+    </div>
+
+    {% if order.status not in ['Livrée', 'Annulée', 'En attente'] %}
+    <a href="{{ url_for('client.track_order', order_id=order.id) }}" class="qf-btn qf-btn-dark qf-btn-sm" style="margin-bottom:10px;">
+      <i class="fas fa-location-arrow"></i> Suivre ma commande
+    </a>
+    {% endif %}
+
+    <p style="color:#6b7280;font-size:.85rem;margin-bottom:6px;">
+      <i class="fas fa-map-marker-alt" style="color:#dc2626;"></i>
+      {{ order.delivery_address or 'Adresse non renseignée' }}
+    </p>
+
+    {% if order.items %}
+    <div class="order-items">
+      {% for item in order.items %}
+      <div style="padding:3px 0;">
+        {{ item.quantity }}× {{ item.product.name if item.product else 'Produit supprimé' }}
+        <span style="color:#9ca3af;">— {{ (item.price * item.quantity)|int }} FCFA</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="order-footer">
+      <div>
+        <div style="font-size:.8rem;color:#6b7280;">Sous-total + livraison</div>
+        <div style="font-weight:800;color:#dc2626;font-size:1rem;">
+          {{ (order.total_amount or 0)|int }} FCFA
+        </div>
+      </div>
+      {% if order.payment_status == 'success' %}
+      <span style="background:#d1fae5;color:#065f46;border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:700;">
+        <i class="fas fa-check-circle"></i> Payé en ligne
+      </span>
+      {% else %}
+      <span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:700;">
+        <i class="fas fa-money-bill-wave"></i> À la livraison
+      </span>
+      {% endif %}
+    </div>
+
+    {% if order.status == 'Livrée' and order.id not in reviewed_order_ids %}
+    <form method="POST" action="{{ url_for('reviews.submit_review', order_id=order.id) }}"
+         style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--qf-border);">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:4px;">Noter ce restaurant</label>
+          <div class="qf-star-input">
+            {% for i in range(5,0,-1) %}
+            <input type="radio" name="rating" id="r{{ order.id }}-{{ i }}" value="{{ i }}" {{ 'checked' if i==5 }}>
+            <label for="r{{ order.id }}-{{ i }}">★</label>
+            {% endfor %}
+          </div>
+        </div>
+        {% if order.driver_id %}
+        <div>
+          <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:4px;">Noter le livreur</label>
+          <div class="qf-star-input">
+            {% for i in range(5,0,-1) %}
+            <input type="radio" name="driver_rating" id="dr{{ order.id }}-{{ i }}" value="{{ i }}" {{ 'checked' if i==5 }}>
+            <label for="dr{{ order.id }}-{{ i }}">★</label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <input type="text" name="comment" class="form-control form-control-sm" placeholder="Un commentaire ? (optionnel)" style="margin-top:10px;">
+      <button type="submit" class="qf-btn qf-btn-primary qf-btn-sm" style="margin-top:10px;">Envoyer mon avis</button>
+    </form>
+    {% elif order.id in reviewed_order_ids %}
+    <div style="margin-top:12px;font-size:.8rem;color:var(--qf-success);"><i class="fas fa-check-circle"></i> Merci, votre avis a été envoyé.</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;background:white;border-radius:16px;">
+    <div style="font-size:3.5rem;margin-bottom:12px;">📭</div>
+    <h5>Aucune commande trouvée</h5>
+    <a href="{{ url_for('main.home') }}" class="btn btn-danger mt-3">Commander</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

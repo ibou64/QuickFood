@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Tickets Support — Admin QuickFood{% endblock %}
+{% block content %}
+<div style="background:#1e293b;padding:14px 40px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+  <span style="color:white;font-weight:800;font-size:1rem;"><i class="fas fa-bolt"></i> Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Dashboard</a>
+  <a href="{{ url_for('admin.orders') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Commandes</a>
+  <a href="{{ url_for('support.admin_tickets') }}" style="color:#38bdf8;text-decoration:none;font-weight:600;font-size:.9rem;">💬 Support</a>
+  <a href="{{ url_for('admin.deliveries') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livraisons</a>
+  <a href="{{ url_for('admin.commissions') }}" style="color:#fbbf24;text-decoration:none;font-weight:600;font-size:.9rem;">💰 Commissions</a>
+  <a href="{{ url_for('auth.logout') }}" style="margin-left:auto;color:#f87171;text-decoration:none;font-weight:600;font-size:.9rem;">Déconnexion</a>
+</div>
+
+<div style="max-width:1200px;margin:36px auto;padding:0 clamp(12px,3vw,20px);">
+  <h3 style="font-weight:800;margin-bottom:24px;">💬 Tickets de Support</h3>
+
+  <!-- Stats -->
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:28px;">
+    {% for label,val,color in [('Total',stats.total,'#1e293b'),('Ouverts',stats.ouverts,'#f59e0b'),('En cours',stats.en_cours,'#3b82f6'),('Résolus',stats.resolus,'#10b981')] %}
+    <div style="flex:1;min-width:120px;background:white;border-radius:14px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.07);text-align:center;border-top:4px solid {{ color }};">
+      <div style="font-size:1.8rem;font-weight:800;color:{{ color }};">{{ val }}</div>
+      <div style="font-size:.82rem;color:#6b7280;">{{ label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Filtres -->
+  <div style="background:white;border-radius:14px;padding:16px 20px;box-shadow:0 4px 14px rgba(0,0,0,.06);margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;width:100%;">
+      <select name="status" class="form-select" style="width:auto;">
+        <option value="">Tous les statuts</option>
+        <option value="ouvert"   {% if status_filter=='ouvert'   %}selected{% endif %}>Ouverts</option>
+        <option value="en_cours" {% if status_filter=='en_cours' %}selected{% endif %}>En cours</option>
+        <option value="resolu"   {% if status_filter=='resolu'   %}selected{% endif %}>Résolus</option>
+        <option value="ferme"    {% if status_filter=='ferme'    %}selected{% endif %}>Fermés</option>
+      </select>
+      <select name="category" class="form-select" style="width:auto;">
+        <option value="">Toutes catégories</option>
+        {% for cat_key,cat_label in categories %}
+        <option value="{{ cat_key }}" {% if cat_filter==cat_key %}selected{% endif %}>{{ cat_label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-danger btn-sm">Filtrer</button>
+      <a href="{{ url_for('support.admin_tickets') }}" class="btn btn-outline-secondary btn-sm">Réinitialiser</a>
+    </form>
+  </div>
+
+  <!-- Liste tickets -->
+  {% if tickets %}
+  {% for ticket in tickets %}
+  <div style="background:white;border-radius:14px;padding:20px;box-shadow:0 4px 14px rgba(0,0,0,.06);margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <div>
+        <span style="font-weight:800;font-size:1rem;">#{{ ticket.id }} — {{ ticket.subject }}</span>
+        <div style="font-size:.82rem;color:#6b7280;margin-top:3px;">
+          <strong>{{ ticket.name }}</strong> ({{ ticket.email }})
+          · {{ ticket.category_label }}
+          · {{ ticket.created_at.strftime('%d/%m/%Y %H:%M') }}
+          {% if ticket.order_id %} · Commande #{{ ticket.order_id }}{% endif %}
+        </div>
+      </div>
+      <span class="badge {{ ticket.status_badge[0] }} fs-6">{{ ticket.status_badge[1] }}</span>
+    </div>
+
+    <div style="background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:14px;font-size:.88rem;color:#374151;">
+      {{ ticket.message|truncate(200) }}
+    </div>
+
+    {% if ticket.response %}
+    <div style="background:#f0fdf4;border-radius:10px;padding:10px 12px;font-size:.85rem;color:#065f46;margin-bottom:14px;">
+      <strong><i class="fas fa-reply"></i> Réponse envoyée :</strong> {{ ticket.response|truncate(150) }}
+    </div>
+    {% endif %}
+
+    <!-- Formulaire réponse -->
+    <form method="POST" action="{{ url_for('support.admin_respond', ticket_id=ticket.id) }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <textarea name="response" class="form-control" rows="2" style="flex:3;min-width:200px;"
+                  placeholder="Votre réponse au client...">{{ ticket.response or '' }}</textarea>
+        <div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:140px;">
+          <select name="status" class="form-select form-select-sm">
+            <option value="ouvert"   {% if ticket.status=='ouvert'   %}selected{% endif %}>Ouvert</option>
+            <option value="en_cours" {% if ticket.status=='en_cours' %}selected{% endif %}>En cours</option>
+            <option value="resolu"   {% if ticket.status=='resolu'   %}selected{% endif %}>Résolu</option>
+            <option value="ferme"    {% if ticket.status=='ferme'    %}selected{% endif %}>Fermé</option>
+          </select>
+          <button type="submit" class="btn btn-danger btn-sm w-100">
+            <i class="fas fa-reply"></i> Répondre
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;background:white;border-radius:16px;">
+    <div style="font-size:3rem;margin-bottom:12px;">✅</div>
+    <h5>Aucun ticket correspondant</h5>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% from "_macros.html" import restaurant_img %}
+{% block title %}QuickFood - Livraison rapide{% endblock %}
+
+{% block content %}
+<!-- ══════════════════════════════════════════════════════
+     BANNIÈRE HAUT — Boutons et accroche
+══════════════════════════════════════════════════════ -->
+<section style="max-width:1200px;margin:24px auto 0;padding:0 16px;">
+  <div class="qf-hero qf-fade-up">
+    <span class="qf-eyebrow" style="color:#fecaca;">QuickFood · Sénégal 🇸🇳</span>
+    <h1 class="qf-h1" style="margin-top:8px;">Commandez vos plats préférés</h1>
+    <p style="opacity:.92;font-size:clamp(.9rem,2vw,1.1rem);margin-bottom:26px;max-width:520px;">
+      Restaurants · Supermarchés · Fruiteries · Boulangeries — livrés rapidement où que vous soyez à Dakar.
+    </p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="{{ url_for('main.restaurants') }}" class="qf-btn" style="background:#fff;color:var(--qf-primary);box-shadow:0 8px 20px rgba(0,0,0,.18);">
+        🏪 Voir les commerces
+      </a>
+      <a href="{{ url_for('auth.partner_register') }}" class="qf-btn" style="background:var(--qf-accent);color:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.18);">
+        🤝 Devenir Partenaire
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     CARROUSEL PUBLICITAIRE — 8 pubs QuickFood
+══════════════════════════════════════════════════════ -->
+<section style="background:#f1f5f9;padding:24px 0 28px;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 16px;">
+
+    <!-- Titre section -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="font-weight:800;font-size:1.1rem;color:#1e293b;margin:0;">
+        🔥 Offres &amp; Actualités
+      </h3>
+      <div style="display:flex;gap:8px;">
+        <button id="pub-prev" aria-label="Précédent"
+          style="width:36px;height:36px;border-radius:50%;border:none;background:white;
+                 box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;font-size:1.1rem;
+                 color:#dc2626;display:flex;align-items:center;justify-content:center;transition:.2s;">
+          &#8249;
+        </button>
+        <button id="pub-next" aria-label="Suivant"
+          style="width:36px;height:36px;border-radius:50%;border:none;background:#dc2626;
+                 box-shadow:0 2px 8px rgba(220,38,38,0.3);cursor:pointer;font-size:1.1rem;
+                 color:white;display:flex;align-items:center;justify-content:center;transition:.2s;">
+          &#8250;
+        </button>
+      </div>
+    </div>
+
+    <!-- Conteneur carrousel -->
+    <div id="pub-viewport" style="overflow:hidden;border-radius:16px;">
+      <div id="pub-track" style="display:flex;gap:16px;transition:transform .45s cubic-bezier(.4,0,.2,1);will-change:transform;">
+
+          <div class="pub-slide">
+            <a href="{{ url_for('main.restaurants') }}" style="display:block;text-decoration:none;">
+              <img src="{{ url_for('static', filename='images/pub1.jpg') }}"
+                   alt="Commandez vos plats préférés — Livraison Rapide à Dakar"
+                   loading="lazy"
+                   style="width:100%;height:100%;object-fit:cover;display:block;border-radius:16px;">
+            </a>
+          </div>
+          <div class="pub-slide">
+            <a href="{{ url_for('auth.partner_register') }}" style="display:block;text-decoration:none;">
+              <img src="{{ url_for('static', filename='images/pub2.jpg') }}"
+                   alt="Restaurants Partenaires — Rejoignez QuickFood"
+                   loading="lazy"
+                   style="width:100%;height:100%;object-fit:cover;display:block;border-radius:16px;">
+            </a>
+          </div>
+          <div class="pub-slide">
+            <a href="{{ url_for('main.restaurants') }}" style="display:block;text-decoration:none;">
+              <img src="{{ url_for('static', filename='images/pub3.jpg') }}"
+                   alt="Trop faim ? Livraison Rapide à Dakar"
+                   loading="lazy"
+                   style="width:100%;height:100%;object-fit:cover;display:block;border-radius:16px;">
+            </a>
+          </div>
+          <div class="pub-slide">
+            <a href="{{ url_for('main.restaurants', cat='restaurant') }}" style="display:block;text-decoration:none;">
+              <img src="{{ url_for('static', filename='images/pub4.jpg') }}"
+                   alt="Thiéboudienne — Cuisine sénégalaise livrée"
+                   loading="lazy"
+                   style="width:100%;height:100%;object-fit:cover;display:block;border-radius:16px;">
+            </a>
+          </div>
+          <div class="pub-slide">
+            <a href="{{ url_for('main.restaurants', cat='restaurant') }}" style="display:block;text-decoration:none;">
+              <img src="{{ url_for('static', filename='images/pub5.jpg') }}"
+                   alt="Pizza & Cuisine du monde livrée à Dakar"
+                   loading="lazy"
+                   style="width:100%;height:100%;object-fit:cover;display:block;border-radius:16px;">
+            </a>
+          </div>
+      </div>
+    </div>
+
+    <!-- Dots -->
+    <div id="pub-dots" style="display:flex;justify-content:center;gap:6px;margin-top:14px;"></div>
+
+  </div>
+</section>
+
+<style>
+.pub-slide {
+  flex-shrink: 0;
+  width: 220px;
+  height: 350px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  transition: transform .25s, box-shadow .25s;
+  cursor: pointer;
+}
+.pub-slide:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.2);
+}
+@media (max-width: 640px) {
+  .pub-slide { width: 160px; height: 255px; }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  .pub-slide { width: 185px; height: 295px; }
+}
+</style>
+
+<script>
+(function(){
+  var track, viewport, dotsEl;
+  var cur = 0, total = 5, autoTimer = null;
+  var slideW = 220, gap = 16;
+  var visible = 4; // slides visibles selon largeur
+
+  function init(){
+    track    = document.getElementById('pub-track');
+    viewport = document.getElementById('pub-viewport');
+    dotsEl   = document.getElementById('pub-dots');
+
+    calcVisible();
+    buildDots();
+    update(0);
+    startAuto();
+
+    document.getElementById('pub-prev').addEventListener('click', function(){ move(-1); });
+    document.getElementById('pub-next').addEventListener('click', function(){ move(1);  });
+
+    // Swipe tactile
+    var sx=0, dragging=false, mv=0;
+    viewport.addEventListener('touchstart', function(e){ sx=e.touches[0].clientX; dragging=true; },{passive:true});
+    viewport.addEventListener('touchmove',  function(e){ if(dragging) mv=e.touches[0].clientX-sx; },{passive:true});
+    viewport.addEventListener('touchend',   function(){
+      if(Math.abs(mv)>40) move(mv<0?1:-1);
+      dragging=false; mv=0;
+    });
+
+    window.addEventListener('resize', function(){ calcVisible(); update(cur); });
+  }
+
+  function calcVisible(){
+    var vw = viewport ? viewport.offsetWidth : window.innerWidth;
+    if(vw<641)       { slideW=160; gap=10; }
+    else if(vw<901)  { slideW=185; gap=12; }
+    else             { slideW=220; gap=16; }
+    visible = Math.floor((vw + gap) / (slideW + gap));
+    visible = Math.max(1, Math.min(visible, total));
+  }
+
+  function maxOffset(){ return Math.max(0, total - visible); }
+
+  function move(dir){
+    cur = Math.min(Math.max(cur + dir, 0), maxOffset());
+    // Boucle infinie
+    if(dir > 0 && cur >= maxOffset()) cur = 0;
+    if(dir < 0 && cur < 0)            cur = maxOffset();
+    update(cur);
+    resetAuto();
+  }
+
+  function update(i){
+    cur = i;
+    if(!track) return;
+    var offset = cur * (slideW + gap);
+    track.style.transform = 'translateX(-' + offset + 'px)';
+    // Mise à jour dots
+    if(dotsEl){
+      var ds = dotsEl.querySelectorAll('.pd');
+      ds.forEach(function(d,j){
+        d.style.background = j===cur ? '#dc2626' : '#cbd5e1';
+        d.style.transform  = j===cur ? 'scale(1.3)' : 'scale(1)';
+      });
+    }
+  }
+
+  function buildDots(){
+    if(!dotsEl) return;
+    dotsEl.innerHTML = '';
+    var max = maxOffset() + 1;
+    for(var i=0; i<max && i<10; i++){
+      var dot = document.createElement('span');
+      dot.className = 'pd';
+      dot.setAttribute('data-i', i);
+      dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#cbd5e1;display:inline-block;cursor:pointer;transition:.25s;';
+      (function(idx){ dot.addEventListener('click', function(){ cur=idx; update(cur); resetAuto(); }); })(i);
+      dotsEl.appendChild(dot);
+    }
+    update(0);
+  }
+
+  function startAuto(){
+    autoTimer = setInterval(function(){
+      var next = cur + 1;
+      if(next > maxOffset()) next = 0;
+      update(next);
+    }, 3500);
+  }
+
+  function resetAuto(){
+    clearInterval(autoTimer);
+    startAuto();
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+})();
+</script>
+
+<!-- Catégories visuelles -->
+<section style="padding:40px 20px;max-width:900px;margin:0 auto;">
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+    <a href="{{ url_for('main.restaurants') }}?cat=restaurant"
+       style="flex:1;min-width:200px;max-width:260px;background:white;border-radius:20px;padding:28px 20px;text-align:center;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,0.08);transition:.3s;border-top:4px solid #dc2626;"
+       onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='none'">
+      <div style="font-size:2.8rem;margin-bottom:10px;">🍽️</div>
+      <h5 style="font-weight:800;color:#1e293b;margin-bottom:4px;">Restaurants</h5>
+      <p style="color:#6b7280;font-size:.85rem;margin:0;">Plats chauds livrés rapidement</p>
+    </a>
+    <a href="{{ url_for('main.restaurants') }}?cat=supermarche"
+       style="flex:1;min-width:200px;max-width:260px;background:white;border-radius:20px;padding:28px 20px;text-align:center;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,0.08);transition:.3s;border-top:4px solid #2563eb;"
+       onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='none'">
+      <div style="font-size:2.8rem;margin-bottom:10px;">🛒</div>
+      <h5 style="font-weight:800;color:#1e293b;margin-bottom:4px;">Supermarchés</h5>
+      <p style="color:#6b7280;font-size:.85rem;margin:0;">Courses livrées chez vous</p>
+    </a>
+    <a href="{{ url_for('main.restaurants') }}?cat=fruiterie"
+       style="flex:1;min-width:150px;max-width:220px;background:white;border-radius:20px;padding:22px 16px;text-align:center;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,0.08);transition:.3s;border-top:4px solid #16a34a;"
+       onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='none'">
+      <div style="font-size:2.5rem;margin-bottom:8px;">🍎</div>
+      <h5 style="font-weight:800;color:#1e293b;margin-bottom:4px;font-size:.95rem;">Fruiteries</h5>
+      <p style="color:#6b7280;font-size:.8rem;margin:0;">Fruits et légumes frais</p>
+    </a>
+    <a href="{{ url_for('main.restaurants') }}?cat=boulangerie"
+       style="flex:1;min-width:150px;max-width:220px;background:white;border-radius:20px;padding:22px 16px;text-align:center;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,0.08);transition:.3s;border-top:4px solid #d97706;"
+       onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='none'">
+      <div style="font-size:2.5rem;margin-bottom:8px;">🥐</div>
+      <h5 style="font-weight:800;color:#1e293b;margin-bottom:4px;font-size:.95rem;">Boulangeries</h5>
+      <p style="color:#6b7280;font-size:.8rem;margin:0;">Pain & pâtisseries</p>
+    </a>
+  </div>
+</section>
+
+<!-- Commerces proches -->
+<section style="padding:44px 20px 60px;">
+  <div style="max-width:1200px;margin:0 auto;">
+  <div style="text-align:center;margin-bottom:6px;">
+    <span class="qf-eyebrow">Autour de vous</span>
+    <h2 class="qf-h2" style="margin-top:6px;">À proximité</h2>
+  </div>
+  <p id="home-geo-status" style="font-size:.85rem;color:var(--qf-muted);margin-bottom:30px;text-align:center;">
+    <i class="fas fa-spinner fa-spin" style="color:var(--qf-primary);"></i> Calcul des distances...
+  </p>
+  {% if restaurants %}
+  <div id="home-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;">
+    {% for r in restaurants %}
+    <a href="{{ url_for('main.restaurant_menu', restaurant_id=r.id) }}"
+       class="home-card qf-card qf-card-hover qf-resto-card qf-fade-up"
+       data-lat="{{ r.latitude if r.latitude else '' }}"
+       data-lng="{{ r.longitude if r.longitude else '' }}"
+       data-distance="9999">
+      <div class="qf-resto-img">
+        {{ restaurant_img(r, height='100%', show_badge=false) }}
+        <span class="qf-badge-cat">{{ r.category_icon }} {{ r.category_label }}</span>
+        <span class="qf-badge-dist home-dist-badge"><span class="home-dist-value">--</span></span>
+      </div>
+      <div class="qf-resto-body">
+        <h3>{{ r.name }}</h3>
+        <div class="qf-rating">
+          {% set avg = restaurant_ratings.get(r.id) %}
+          {% if avg %}★ {{ "%.1f"|format(avg) }}{% else %}<span class="qf-muted" style="font-weight:600;">Nouveau</span>{% endif %}
+          <span class="qf-muted home-fee-value" style="font-weight:600;"></span>
+        </div>
+        <p class="qf-muted" style="font-size:.82rem;margin:6px 0 0;">{{ (r.description or '')|truncate(50) }}</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:#888;text-align:center;">Aucun commerce disponible pour le moment.</p>
+  {% endif %}
+  </div>
+</section>
+
+<section style="background:white;padding:60px 20px;text-align:center;">
+  <h2 style="color:#dc2626;font-weight:800;font-size:2rem;margin-bottom:40px;">Pourquoi choisir QuickFood ?</h2>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:25px;">
+    {% for icon,title,desc in [
+      ('fa-clock','Livraison rapide','Moins de 45 min'),
+      ('fa-store','3 types de commerces','Restos · Supermarchés · Fruiteries'),
+      ('fa-lock','Paiement sécurisé','Wave · Orange Money · Carte'),
+      ('fa-mobile-alt','Suivi temps réel','Suivez votre commande')
+    ] %}
+    <div style="flex:1 1 190px;max-width:220px;background:white;padding:28px 18px;border-radius:20px;box-shadow:0 12px 28px rgba(0,0,0,0.07);">
+      <i class="fas {{ icon }}" style="font-size:36px;color:#dc2626;margin-bottom:12px;"></i>
+      <h5 style="font-weight:700;margin-bottom:5px;">{{ title }}</h5>
+      <p style="color:#666;font-size:.88rem;margin:0;">{{ desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function haversine(lat1,lon1,lat2,lon2){
+  var R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function deliveryFee(km){
+  if(km<=2)return'500 FCFA';if(km<=5)return'1 000 FCFA';
+  if(km<=10)return'1 500 FCFA';if(km<=20)return'2 500 FCFA';return'3 500 FCFA';
+}
+function updateHomeDistances(lat,lng){
+  document.querySelectorAll('.home-card').forEach(function(card){
+    var rLat=parseFloat(card.getAttribute('data-lat')),rLng=parseFloat(card.getAttribute('data-lng'));
+    var dv=card.querySelector('.home-dist-value'),fv=card.querySelector('.home-fee-value');
+    if(!rLat||!rLng||isNaN(rLat)){dv.textContent='N/A';fv.textContent='';card.setAttribute('data-distance',9999);return;}
+    var d=haversine(lat,lng,rLat,rLng);
+    card.setAttribute('data-distance',d);
+    dv.textContent=d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km';
+    fv.textContent=' · '+deliveryFee(d);
+  });
+  var grid=document.getElementById('home-grid');
+  if(grid){
+    var cards=Array.prototype.slice.call(document.querySelectorAll('.home-card'));
+    cards.sort(function(a,b){return parseFloat(a.getAttribute('data-distance'))-parseFloat(b.getAttribute('data-distance'));});
+    cards.forEach(function(c){grid.appendChild(c);});
+  }
+  document.getElementById('home-geo-status').innerHTML=
+    '<i class="fas fa-check-circle" style="color:#10b981;"></i> Trié par distance · '+
+    '<a href="/restaurants" style="color:#dc2626;text-decoration:none;font-weight:600;">Voir tout →</a>';
+}
+window.addEventListener('load',function(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(p){updateHomeDistances(p.coords.latitude,p.coords.longitude);},
+      function(){updateHomeDistances(14.6928,-17.4467);}
+      ,{timeout:8000}
+    );
+  } else {updateHomeDistances(14.6928,-17.4467);}
+});
+</script>
+{% endblock %}

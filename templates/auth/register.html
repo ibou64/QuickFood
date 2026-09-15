@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Inscription - QuickFood{% endblock %}
+{% block content %}
+<div style="max-width:440px;margin:60px auto;background:white;padding:2.5rem;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+  <h2 style="text-align:center;color:#dc2626;margin-bottom:1.5rem;font-weight:800;">Créer un compte</h2>
+  <form method="POST">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Nom complet</label>
+      <input type="text" name="name" class="form-control" placeholder="Votre nom" required autofocus>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Email</label>
+      <input type="email" name="email" class="form-control" placeholder="votre@email.com" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Mot de passe</label>
+      <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Confirmer le mot de passe</label>
+      <input type="password" name="confirm_password" class="form-control" placeholder="••••••••" required>
+    </div>
+
+    <!-- Case CGU obligatoire -->
+    <div class="mb-4" style="background:#fef2f2;border-radius:10px;padding:12px 14px;">
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" name="accept_cgu" id="accept_cgu" required>
+        <label class="form-check-label" for="accept_cgu" style="font-size:.88rem;color:#374151;">
+          J'ai lu et j'accepte les
+          <a href="{{ url_for('main.cgu') }}" target="_blank"
+             style="color:#dc2626;font-weight:700;text-decoration:none;">
+            Conditions Générales d'Utilisation
+          </a>
+          de QuickFood. *
+        </label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-danger w-100 fw-bold py-2">S'inscrire</button>
+  </form>
+  <p class="text-center mt-3 mb-0">
+    <a href="{{ url_for('auth.login') }}">Déjà un compte ? Connectez-vous</a>
+  </p>
+</div>
+{% endblock %}

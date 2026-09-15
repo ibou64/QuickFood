@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Devenir Partenaire - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+  .type-card {
+    flex:1; min-width:140px; border:2px solid #e5e7eb; border-radius:16px;
+    padding:20px 12px; cursor:pointer; text-align:center; transition:.2s;
+    background:white; user-select:none; position:relative;
+  }
+  .type-card:hover { border-color:#dc2626; box-shadow:0 4px 14px rgba(220,38,38,.12); }
+  .type-card.selected { border-color:#dc2626; background:#fef2f2; }
+  .type-card .check-icon {
+    display:none; position:absolute; top:8px; right:10px;
+    color:#dc2626; font-size:1rem; font-weight:900;
+  }
+  .type-card.selected .check-icon { display:block; }
+  .type-card input[type=checkbox] { display:none; }
+  .step-badge {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; background:#dc2626; color:white;
+    border-radius:50%; font-weight:800; font-size:.85rem; margin-right:8px; flex-shrink:0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:580px;margin:60px auto;padding:0 20px 60px;">
+
+  <!-- Header -->
+  <div style="text-align:center;margin-bottom:32px;">
+    <h2 style="color:#dc2626;font-weight:800;font-size:2rem;margin-bottom:8px;">Devenir Partenaire 🤝</h2>
+    <p style="color:#6b7280;font-size:1rem;">Rejoignez QuickFood et développez votre activité à Dakar</p>
+  </div>
+
+  <div style="background:white;border-radius:20px;padding:36px 32px;box-shadow:0 10px 40px rgba(0,0,0,0.1);">
+    <form method="POST" action="{{ url_for('auth.partner_register') }}" id="partner-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Étape 1 — Type de commerce -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex;align-items:center;margin-bottom:14px;">
+          <span class="step-badge">1</span>
+          <span style="font-weight:700;font-size:1rem;">Type de commerce</span>
+        </div>
+        <p style="font-size:.85rem;color:#6b7280;margin-bottom:14px;">
+          Sélectionnez un ou plusieurs types — un commerce sera créé pour chaque choix.
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;" id="type-cards">
+          <div class="type-card selected" id="card-restaurant" onclick="toggleType('restaurant')">
+            <input type="checkbox" name="categories" value="restaurant" checked id="chk-restaurant">
+            <i class="fas fa-check check-icon"></i>
+            <div style="font-size:2.2rem;margin-bottom:8px;">🍽️</div>
+            <strong style="font-size:.88rem;display:block;">Restaurant</strong>
+            <span style="font-size:.75rem;color:#6b7280;">Plats & cuisine</span>
+          </div>
+          <div class="type-card" id="card-supermarche" onclick="toggleType('supermarche')">
+            <input type="checkbox" name="categories" value="supermarche" id="chk-supermarche">
+            <i class="fas fa-check check-icon"></i>
+            <div style="font-size:2.2rem;margin-bottom:8px;">🛒</div>
+            <strong style="font-size:.88rem;display:block;">Supermarché</strong>
+            <span style="font-size:.75rem;color:#6b7280;">Épicerie & courses</span>
+          </div>
+          <div class="type-card" id="card-fruiterie" onclick="toggleType('fruiterie')">
+            <input type="checkbox" name="categories" value="fruiterie" id="chk-fruiterie">
+            <i class="fas fa-check check-icon"></i>
+            <div style="font-size:2.2rem;margin-bottom:8px;">🍎</div>
+            <strong style="font-size:.88rem;display:block;">Fruiterie</strong>
+            <span style="font-size:.75rem;color:#6b7280;">Fruits & légumes</span>
+          </div>
+          <div class="type-card" id="card-boulangerie" onclick="toggleType('boulangerie')">
+            <input type="checkbox" name="categories" value="boulangerie" id="chk-boulangerie">
+            <i class="fas fa-check check-icon"></i>
+            <div style="font-size:2.2rem;margin-bottom:8px;">🥐</div>
+            <strong style="font-size:.88rem;display:block;">Boulangerie</strong>
+            <span style="font-size:.75rem;color:#6b7280;">& Pâtisserie</span>
+          </div>
+        </div>
+        <div id="type-error" style="display:none;color:#dc2626;font-size:.83rem;margin-top:8px;">
+          <i class="fas fa-exclamation-circle"></i> Sélectionnez au moins un type de commerce.
+        </div>
+      </div>
+
+      <hr style="border-color:#f1f5f9;margin-bottom:24px;">
+
+      <!-- Étape 2 — Nom du ou des commerces -->
+      <div style="margin-bottom:28px;" id="commerce-names">
+        <div style="display:flex;align-items:center;margin-bottom:14px;">
+          <span class="step-badge">2</span>
+          <span style="font-weight:700;font-size:1rem;">Nom de votre commerce</span>
+        </div>
+
+        <div id="name-restaurant" class="commerce-name-field">
+          <label class="form-label fw-semibold" style="font-size:.9rem;">
+            🍽️ Nom du restaurant *
+          </label>
+          <input type="text" name="name_restaurant" class="form-control mb-3"
+                 placeholder="Ex: Chez Mama Fatou">
+        </div>
+        <div id="name-supermarche" class="commerce-name-field" style="display:none;">
+          <label class="form-label fw-semibold" style="font-size:.9rem;">
+            🛒 Nom du supermarché *
+          </label>
+          <input type="text" name="name_supermarche" class="form-control mb-3"
+                 placeholder="Ex: Supérette Almadies">
+        </div>
+        <div id="name-fruiterie" class="commerce-name-field" style="display:none;">
+          <label class="form-label fw-semibold" style="font-size:.9rem;">
+            🍎 Nom de la fruiterie *
+          </label>
+          <input type="text" name="name_fruiterie" class="form-control mb-3"
+                 placeholder="Ex: Fruiterie Ngor Fraîcheur">
+        </div>
+        <div id="name-boulangerie" class="commerce-name-field" style="display:none;">
+          <label class="form-label fw-semibold" style="font-size:.9rem;">
+            🥐 Nom de la boulangerie / pâtisserie *
+          </label>
+          <input type="text" name="name_boulangerie" class="form-control mb-3"
+                 placeholder="Ex: Boulangerie Fatou, Pâtisserie du Plateau">
+        </div>
+      </div>
+
+      <hr style="border-color:#f1f5f9;margin-bottom:24px;">
+
+      <!-- Étape 3 — Informations personnelles -->
+      <div style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;margin-bottom:14px;">
+          <span class="step-badge">3</span>
+          <span style="font-weight:700;font-size:1rem;">Vos informations</span>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <!-- Client connecté : on réutilise son compte -->
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+          <i class="fas fa-check-circle" style="color:#16a34a;font-size:1.2rem;"></i>
+          <div>
+            <div style="font-weight:700;color:#15803d;">Connecté en tant que {{ current_user.name }}</div>
+            <div style="font-size:.85rem;color:#166534;">{{ current_user.email }} — votre compte sera upgradé en partenaire</div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Téléphone professionnel</label>
+          <input type="tel" name="phone" class="form-control" placeholder="77 000 00 00">
+        </div>
+        {% else %}
+        <!-- Nouvel utilisateur -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nom complet *</label>
+          <input type="text" name="name" class="form-control" required placeholder="Votre nom complet">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Téléphone</label>
+          <input type="tel" name="phone" class="form-control" placeholder="77 000 00 00">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Email *</label>
+          <input type="email" name="email" class="form-control" required placeholder="votre@email.com">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Mot de passe *</label>
+          <input type="password" name="password" class="form-control" required placeholder="••••••••" minlength="6">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Confirmer le mot de passe *</label>
+          <input type="password" name="confirm_password" class="form-control" required placeholder="••••••••">
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- CGU Partenaire obligatoire -->
+      <div style="background:#fef2f2;border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" name="accept_cgu" id="accept_cgu_partner" required>
+          <label class="form-check-label" for="accept_cgu_partner" style="font-size:.87rem;color:#374151;">
+            J'ai lu et j'accepte les
+            <a href="{{ url_for('main.cgu') }}#partner" target="_blank"
+               style="color:#dc2626;font-weight:700;text-decoration:none;">
+              CGU Clients
+            </a>
+            et les
+            <a href="{{ url_for('main.cgu') }}#partner" target="_blank"
+               style="color:#dc2626;font-weight:700;text-decoration:none;">
+              CGU Partenaires
+            </a>
+            de QuickFood. *
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-danger w-100 fw-bold py-3" style="font-size:1rem;border-radius:12px;" id="btn-submit">
+        <i class="fas fa-rocket"></i> Créer mon compte partenaire
+      </button>
+    </form>
+
+    <p class="text-center mt-3 mb-0" style="font-size:.88rem;">
+      Déjà partenaire ?
+      <a href="{{ url_for('auth.login') }}" style="color:#dc2626;font-weight:600;">Se connecter</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var selected = { restaurant: true, supermarche: false, fruiterie: false, boulangerie: false };
+
+function toggleType(type) {
+  // Au moins 1 doit rester coché
+  var count = Object.values(selected).filter(Boolean).length;
+  if (selected[type] && count === 1) {
+    document.getElementById('type-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('type-error').style.display = 'none';
+
+  selected[type] = !selected[type];
+  var card = document.getElementById('card-' + type);
+  var chk  = document.getElementById('chk-' + type);
+  var nameField = document.getElementById('name-' + type);
+
+  if (selected[type]) {
+    card.classList.add('selected');
+    chk.checked = true;
+    if (nameField) nameField.style.display = 'block';
+  } else {
+    card.classList.remove('selected');
+    chk.checked = false;
+    if (nameField) nameField.style.display = 'none';
+  }
+}
+
+// Validation avant soumission
+document.getElementById('partner-form').addEventListener('submit', function(e) {
+  // Vérifier qu'au moins 1 type est sélectionné
+  var anySelected = Object.values(selected).some(Boolean);
+  if (!anySelected) {
+    e.preventDefault();
+    document.getElementById('type-error').style.display = 'block';
+    document.getElementById('type-cards').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  // Vérifier que les noms des commerces sélectionnés sont remplis
+  var types = ['restaurant', 'supermarche', 'fruiterie', 'boulangerie'];
+  for (var i = 0; i < types.length; i++) {
+    var t = types[i];
+    if (selected[t]) {
+      var inp = document.querySelector('input[name="name_' + t + '"]');
+      if (inp && !inp.value.trim()) {
+        e.preventDefault();
+        inp.focus();
+        inp.style.borderColor = '#dc2626';
+        inp.placeholder = 'Ce champ est obligatoire';
+        return;
+      }
+    }
+  }
+});
+</script>
+{% endblock %}

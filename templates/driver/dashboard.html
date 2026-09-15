@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Espace livreur - QuickFood{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;margin:32px auto;padding:0 16px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <div>
+      <span class="qf-eyebrow">🛵 Espace livreur</span>
+      <h2 class="qf-h2" style="margin-top:4px;">{{ driver.user.name }}</h2>
+    </div>
+    <button id="availability-toggle" class="qf-btn {{ 'qf-btn-primary' if driver.is_available else 'qf-btn-ghost' }}"
+           data-available="{{ 'true' if driver.is_available else 'false' }}">
+      <i class="fas fa-power-off"></i>
+      <span id="availability-label">{{ 'En ligne' if driver.is_available else 'Hors ligne' }}</span>
+    </button>
+  </div>
+
+  <div id="location-status" class="qf-muted" style="font-size:.82rem;margin-bottom:16px;">
+    <i class="fas fa-satellite-dish"></i> Position GPS non partagée.
+  </div>
+
+  <h4 class="qf-h2" style="font-size:1.1rem;margin-bottom:12px;">Livraisons en cours</h4>
+  {% if active_orders %}
+  {% for order in active_orders %}
+  <div class="qf-card" style="padding:18px 20px;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div>
+        <strong>Commande #{{ order.id }}</strong>
+        <div class="qf-muted" style="font-size:.85rem;">{{ order.restaurant.name if order.restaurant else '' }}</div>
+      </div>
+      <span class="badge bg-info">{{ order.status }}</span>
+    </div>
+    <p style="font-size:.85rem;margin:10px 0 4px;"><i class="fas fa-map-marker-alt" style="color:var(--qf-primary);"></i> {{ order.delivery_address }}</p>
+    <p style="font-size:.85rem;margin:0;"><i class="fas fa-user"></i> {{ order.delivery_name }} — <a href="tel:{{ order.delivery_phone }}">{{ order.delivery_phone }}</a></p>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      {% if order.status == 'Livreur assigné' %}
+      <button class="qf-btn qf-btn-dark qf-btn-sm order-action" data-order="{{ order.id }}" data-action="picked-up">
+        <i class="fas fa-box"></i> Colis récupéré
+      </button>
+      {% elif order.status == 'En livraison' %}
+      <button class="qf-btn qf-btn-primary qf-btn-sm order-action" data-order="{{ order.id }}" data-action="delivered">
+        <i class="fas fa-check"></i> Marquer livrée
+      </button>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="qf-muted">Aucune livraison en cours. Passez en ligne pour en recevoir.</p>
+  {% endif %}
+
+  {% if history %}
+  <h4 class="qf-h2" style="font-size:1.1rem;margin:28px 0 12px;">Historique récent</h4>
+  <div class="qf-card" style="overflow:hidden;">
+    <table class="table mb-0">
+      <tbody>
+        {% for order in history %}
+        <tr>
+          <td>#{{ order.id }}</td>
+          <td>{{ order.restaurant.name if order.restaurant else '' }}</td>
+          <td class="text-muted">{{ order.delivered_at.strftime('%d/%m %H:%M') if order.delivered_at else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var toggleBtn = document.getElementById('availability-toggle');
+toggleBtn.addEventListener('click', function () {
+  fetch('{{ url_for("driver.toggle_availability") }}', { method: 'POST' })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var label = document.getElementById('availability-label');
+      if (data.is_available) {
+        label.textContent = 'En ligne';
+        toggleBtn.classList.add('qf-btn-primary'); toggleBtn.classList.remove('qf-btn-ghost');
+        startWatching();
+      } else {
+        label.textContent = 'Hors ligne';
+        toggleBtn.classList.remove('qf-btn-primary'); toggleBtn.classList.add('qf-btn-ghost');
+      }
+    });
+});
+
+document.querySelectorAll('.order-action').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var orderId = btn.dataset.order, action = btn.dataset.action;
+    fetch('/driver/order/' + orderId + '/' + action, { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function () { window.location.reload(); });
+  });
+});
+
+var watchId = null;
+function startWatching() {
+  if (!navigator.geolocation || watchId) return;
+  watchId = navigator.geolocation.watchPosition(function (pos) {
+    document.getElementById('location-status').innerHTML =
+      '<i class="fas fa-satellite-dish" style="color:var(--qf-success);"></i> Position partagée en direct.';
+    fetch('{{ url_for("driver.update_location") }}', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    });
+  }, function () {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+}
+
+{% if driver.is_available %}startWatching();{% endif %}
+</script>
+{% endblock %}

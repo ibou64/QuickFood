@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Commissions & TVA — Admin QuickFood{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-nav { background:#1e293b; padding:14px 40px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+  .admin-nav a { color:#94a3b8; text-decoration:none; font-weight:600; font-size:.9rem; transition:.2s; }
+  .admin-nav a:hover { color:white; }
+
+  .kpi { background:white; border-radius:14px; padding:22px 20px; box-shadow:0 6px 20px rgba(0,0,0,0.07); text-align:center; }
+  .kpi-num  { font-size:1.75rem; font-weight:800; }
+  .kpi-label { color:#6b7280; font-size:.82rem; margin-top:4px; }
+
+  .card-section { background:white; border-radius:16px; padding:28px; box-shadow:0 6px 20px rgba(0,0,0,0.07); margin-bottom:28px; }
+
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:#1e293b; color:white; }
+  th, td { padding:12px 14px; text-align:right; font-size:.88rem; }
+  th:first-child, td:first-child { text-align:left; }
+  tbody tr:nth-child(even) { background:#f8fafc; }
+  tbody tr:hover { background:#fef2f2; }
+  tfoot tr { background:#fef2f2; font-weight:700; }
+
+  .badge-rate { background:#dbeafe; color:#1e40af; padding:3px 10px; border-radius:20px; font-size:.78rem; font-weight:700; }
+  .text-green { color:#10b981; font-weight:700; }
+  .text-red   { color:#dc2626; font-weight:700; }
+
+  .filter-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:24px; }
+  .filter-bar select, .filter-bar button { padding:8px 14px; border-radius:10px; border:1px solid #e5e7eb; font-size:.88rem; background:white; cursor:pointer; }
+  .filter-bar button { background:#dc2626; color:white; border:none; font-weight:600; }
+
+  @media print {
+    .admin-nav, .filter-bar, .no-print { display:none !important; }
+    body { background:white; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Admin Nav -->
+<div class="admin-nav">
+  <span style="color:white;font-weight:800;font-size:1rem;margin-right:10px;"><i class="fas fa-bolt"></i> Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}">Utilisateurs</a>
+  <a href="{{ url_for('admin.partners') }}">Partenaires</a>
+  <a href="{{ url_for('admin.restaurants') }}">Restaurants</a>
+  <a href="{{ url_for('admin.orders') }}">Commandes</a>
+  <a href="{{ url_for('admin.deliveries') }}" style="color:#38bdf8;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livraisons</a>
+  <a href="{{ url_for('support.admin_tickets') }}" style="color:#a78bfa;text-decoration:none;font-weight:600;font-size:.9rem;">💬 Support</a>
+  <a href="{{ url_for('admin.stats') }}">Statistiques</a>
+  <a href="{{ url_for('admin.commissions') }}" style="color:white;">Commissions</a>
+  <a href="{{ url_for('admin.drivers') }}" style="color:#34d399;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livreurs</a>
+  <a href="{{ url_for('admin.promos') }}" style="color:#f472b6;text-decoration:none;font-weight:600;font-size:.9rem;">🏷️ Promos</a>
+  <a href="{{ url_for('admin.reviews') }}" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:.9rem;">⭐ Avis</a>
+  <a href="{{ url_for('admin.splits') }}" style="color:#4ade80;">💸 Split Payment</a>
+  <a href="{{ url_for('auth.logout') }}" style="margin-left:auto;color:#f87171;">Déconnexion</a>
+</div>
+
+<div style="max-width:1200px;margin:36px auto;padding:0 20px;">
+
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:28px;">
+    <div>
+      <h2 style="font-weight:800;margin-bottom:4px;">💰 Commissions & TVA</h2>
+      <p style="color:#6b7280;margin:0;">TVA appliquée : <strong>{{ tva_rate }}%</strong> (sur commission HT) · Sénégal CFAF</p>
+    </div>
+    <div class="no-print" style="display:flex;gap:10px;">
+      <button onclick="window.print()" style="background:#1e293b;color:white;padding:9px 18px;border:none;border-radius:10px;cursor:pointer;font-weight:600;">
+        <i class="fas fa-print"></i> Imprimer
+      </button>
+      <button onclick="exportCSV()" style="background:#10b981;color:white;padding:9px 18px;border:none;border-radius:10px;cursor:pointer;font-weight:600;">
+        <i class="fas fa-file-csv"></i> Exporter CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <form method="GET" class="filter-bar no-print">
+    <label style="font-weight:600;font-size:.88rem;">Période :</label>
+    <select name="period">
+      <option value="all"   {% if period=='all'   %}selected{% endif %}>Tout</option>
+      <option value="month" {% if period=='month' %}selected{% endif %}>30 derniers jours</option>
+      <option value="week"  {% if period=='week'  %}selected{% endif %}>7 derniers jours</option>
+    </select>
+    <label style="font-weight:600;font-size:.88rem;">Restaurant :</label>
+    <select name="restaurant_id">
+      <option value="">Tous les restaurants</option>
+      {% for r in restaurants %}
+      <option value="{{ r.id }}" {% if selected_restaurant == r.id|string %}selected{% endif %}>{{ r.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit"><i class="fas fa-filter"></i> Filtrer</button>
+    <a href="{{ url_for('admin.commissions') }}" style="color:#6b7280;font-size:.88rem;text-decoration:none;padding:8px 10px;">Réinitialiser</a>
+  </form>
+
+  <!-- KPIs -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:28px;">
+    <div class="kpi">
+      <div class="kpi-num" style="color:#1e293b;">{{ totals.ca|int|format_number }}</div>
+      <div class="kpi-label">CA total (FCFA)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#3b82f6;">{{ totals.delivery|int|format_number }}</div>
+      <div class="kpi-label">Frais livraison</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#f59e0b;">{{ totals.commission_ht|int|format_number }}</div>
+      <div class="kpi-label">Commission HT</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#8b5cf6;">{{ totals.tva|int|format_number }}</div>
+      <div class="kpi-label">TVA {{ tva_rate }}%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num text-red">{{ totals.quickfood_total|int|format_number }}</div>
+      <div class="kpi-label">Total QuickFood 🏦</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num text-green">{{ totals.restaurant_net|int|format_number }}</div>
+      <div class="kpi-label">Net restaurants</div>
+    </div>
+    <div class="kpi">
+      {% if totals.split_pending > 0 %}
+      <div class="kpi-num" style="color:#f59e0b;">{{ totals.split_pending }}</div>
+      <div class="kpi-label">Splits en attente ⚠️</div>
+      {% else %}
+      <div class="kpi-num" style="color:#10b981;">{{ totals.split_done }}</div>
+      <div class="kpi-label">Splits calculés ✓</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Table détail -->
+  <div class="card-section">
+    <h5 style="font-weight:700;margin-bottom:18px;">Détail par restaurant</h5>
+
+    {% if rows %}
+    <div style="overflow-x:auto;">
+      <table id="commission-table">
+        <thead>
+          <tr>
+            <th>Restaurant</th>
+            <th>Taux</th>
+            <th>Nb commandes</th>
+            <th>CA (FCFA)</th>
+            <th>Livraison</th>
+            <th>Commission HT</th>
+            <th>TVA {{ tva_rate }}%</th>
+            <th>Commission TTC</th>
+            <th>Total QF</th>
+            <th>Net restaurant</th>
+            <th>Split ✓</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              <strong>{{ row.name }}</strong><br>
+              <a href="{{ url_for('admin.restaurant_orders', restaurant_id=row.id) }}"
+                 style="font-size:.78rem;color:#dc2626;text-decoration:none;">Voir commandes →</a>
+            </td>
+            <td><span class="badge-rate">{{ row.commission_rate }}%</span></td>
+            <td style="text-align:center;">{{ row.nb_orders }}</td>
+            <td>{{ row.ca|int|format_number }}</td>
+            <td style="color:#3b82f6;font-weight:600;">{{ row.delivery|int|format_number }}</td>
+            <td style="color:#f59e0b;font-weight:600;">{{ row.commission_ht|int|format_number }}</td>
+            <td style="color:#8b5cf6;font-weight:600;">{{ row.tva|int|format_number }}</td>
+            <td class="text-red">{{ row.commission_ttc|int|format_number }}</td>
+            <td style="color:#dc2626;font-weight:800;">{{ row.qf_total|int|format_number }}</td>
+            <td class="text-green">{{ row.restaurant_net|int|format_number }}</td>
+            <td style="text-align:center;">
+              <span style="font-size:.78rem;color:#10b981;font-weight:700;">✓ {{ row.split_done }}</span>
+              {% if row.split_pending > 0 %}
+              <span style="font-size:.78rem;color:#f59e0b;font-weight:700;margin-left:4px;">⏳ {{ row.split_pending }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">TOTAUX</td>
+            <td>{{ totals.ca|int|format_number }}</td>
+            <td style="color:#3b82f6;">{{ totals.delivery|int|format_number }}</td>
+            <td>{{ totals.commission_ht|int|format_number }}</td>
+            <td>{{ totals.tva|int|format_number }}</td>
+            <td>{{ totals.commission_ttc|int|format_number }}</td>
+            <td style="color:#dc2626;">{{ totals.quickfood_total|int|format_number }}</td>
+            <td>{{ totals.restaurant_net|int|format_number }}</td>
+            <td>
+              <span style="color:#10b981;">✓ {{ totals.split_done }}</span>
+              {% if totals.split_pending > 0 %}
+              <span style="color:#f59e0b;margin-left:4px;">⏳ {{ totals.split_pending }}</span>
+              {% endif %}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+      <p style="color:#888;text-align:center;padding:30px 0;">
+        Aucune commande livrée sur cette période.
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Explication calcul -->
+  <div class="card-section" style="background:#f8fafc;border:1px solid #e2e8f0;">
+    <h5 style="font-weight:700;margin-bottom:14px;">📐 Formule de calcul du split</h5>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;font-size:.88rem;">
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #f59e0b;">
+        <strong>Commission HT</strong><br>
+        Sous-total articles × Taux de commission
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #3b82f6;">
+        <strong>Frais de livraison</strong><br>
+        100 % QuickFood — non partagés
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #8b5cf6;">
+        <strong>TVA {{ tva_rate }}%</strong><br>
+        Commission HT × {{ tva_rate / 100 }}
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #dc2626;">
+        <strong>Total QuickFood</strong><br>
+        Commission TTC + Frais de livraison
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #10b981;">
+        <strong>Net restaurant</strong><br>
+        Sous-total − Commission HT (HT, non TTC)
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #6b7280;">
+        <strong>Déclenchement</strong><br>
+        Automatique via IPN PayTech (sale_complete)
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Export CSV côté client
+function exportCSV() {
+  const table = document.getElementById('commission-table');
+  if (!table) return;
+  let csv = [];
+  for (const row of table.rows) {
+    const cols = Array.from(row.cells).map(c => '"' + c.innerText.replace(/\n.*/,'').trim().replace(/\s+/g,' ') + '"');
+    csv.push(cols.join(','));
+  }
+  const blob = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'quickfood_commissions.csv';
+  a.click();
+}
+</script>
+{% endblock %}

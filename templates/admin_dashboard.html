@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% from "_macros.html" import restaurant_avatar %}
+{% block title %}Admin Dashboard - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+  .admin-nav { background:#1e293b; padding:14px 40px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+  .admin-nav a { color:#94a3b8; text-decoration:none; font-weight:600; font-size:.9rem; transition:.2s; }
+  .admin-nav a:hover, .admin-nav a.active { color:white; }
+  .stat-card { background:white; border-radius:14px; padding:24px; box-shadow:0 8px 22px rgba(0,0,0,0.07); text-align:center; transition:.3s; }
+  .stat-card:hover { transform:translateY(-4px); }
+  .stat-num { font-size:2.4rem; font-weight:800; color:#dc2626; }
+  .stat-label { color:#6b7280; font-size:.9rem; margin-top:4px; }
+  .stat-link { display:inline-block; margin-top:12px; background:#dc2626; color:white; padding:6px 18px; border-radius:20px; text-decoration:none; font-size:.82rem; font-weight:600; }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="admin-nav">
+  <span style="color:white;font-weight:800;font-size:1rem;margin-right:10px;"><i class="fas fa-bolt"></i> QuickFood Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}" class="active">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}">Utilisateurs</a>
+  <a href="{{ url_for('admin.partners') }}">Partenaires</a>
+  <a href="{{ url_for('admin.restaurants') }}">Restaurants</a>
+  <a href="{{ url_for('admin.orders') }}">Commandes</a>
+  <a href="{{ url_for('admin.deliveries') }}" style="color:#38bdf8;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livraisons</a>
+  <a href="{{ url_for('support.admin_tickets') }}" style="color:#a78bfa;text-decoration:none;font-weight:600;font-size:.9rem;">💬 Support</a>
+  <a href="{{ url_for('admin.stats') }}">Statistiques</a>
+  <a href="{{ url_for('admin.commissions') }}" style="color:#fbbf24;font-weight:700;">💰 Commissions</a>
+  <a href="{{ url_for('admin.drivers') }}" style="color:#34d399;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livreurs</a>
+  <a href="{{ url_for('admin.promos') }}" style="color:#f472b6;text-decoration:none;font-weight:600;font-size:.9rem;">🏷️ Promos</a>
+  <a href="{{ url_for('admin.reviews') }}" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:.9rem;">⭐ Avis</a>
+  <a href="{{ url_for('auth.logout') }}" style="margin-left:auto;color:#f87171;">Déconnexion</a>
+</div>
+
+<div style="max-width:1200px;margin:40px auto;padding:0 20px;">
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px;margin-bottom:40px;">
+    <div class="stat-card">
+      <div class="stat-num">{{ total_clients }}</div>
+      <div class="stat-label">Clients</div>
+      <a href="{{ url_for('admin.users') }}" class="stat-link">Voir</a>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ total_partners }}</div>
+      <div class="stat-label">Partenaires</div>
+      <a href="{{ url_for('admin.partners') }}" class="stat-link">Voir</a>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ total_restaurants }}</div>
+      <div class="stat-label">Restaurants</div>
+      <a href="{{ url_for('admin.restaurants') }}" class="stat-link">Voir</a>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ total_orders }}</div>
+      <div class="stat-label">Commandes</div>
+      <a href="{{ url_for('admin.orders') }}" class="stat-link">Voir</a>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ total_revenue|int }}</div>
+      <div class="stat-label">Revenus (FCFA)</div>
+      <a href="{{ url_for('admin.stats') }}" class="stat-link">Stats</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Recent restaurants -->
+    <div class="col-md-6">
+      <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 8px 22px rgba(0,0,0,0.07);">
+        <h5 style="font-weight:700;margin-bottom:18px;">🏪 Derniers restaurants</h5>
+        {% for r in recent_restaurants %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            {{ restaurant_avatar(r, size='36px') }}
+            <span style="font-weight:600;">{{ r.name }}</span>
+          </div>
+          <span style="font-size:.8rem;background:{{ '#d1fae5' if r.is_active else '#fee2e2' }};color:{{ '#065f46' if r.is_active else '#991b1b' }};padding:3px 10px;border-radius:20px;">
+            {{ 'Actif' if r.is_active else 'Inactif' }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <!-- Recent orders -->
+    <div class="col-md-6">
+      <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 8px 22px rgba(0,0,0,0.07);">
+        <h5 style="font-weight:700;margin-bottom:18px;">📋 Dernières commandes</h5>
+        {% for order in recent_orders %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">
+          <span style="font-weight:600;">#{{ order.id }} — {{ (order.total_amount or 0)|int }} FCFA</span>
+          <span style="font-size:.8rem;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#92400e;">{{ order.status }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

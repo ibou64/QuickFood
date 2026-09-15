@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "_macros.html" import restaurant_img %}
+{% block title %}Dashboard Partenaire - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+.partner-header { background:linear-gradient(135deg,#1e293b,#334155);color:white;
+  padding:clamp(18px,4vw,35px) clamp(14px,4vw,40px);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px; }
+.stat-card { flex:1 1 160px;background:white;border-radius:14px;padding:20px;
+             box-shadow:0 6px 18px rgba(0,0,0,.07);text-align:center; }
+.resto-card-p { flex:1 1 260px;max-width:100%;background:white;border-radius:18px;
+                overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.08);transition:.3s; }
+.resto-card-p:hover { transform:translateY(-5px); }
+.resto-actions { display:flex;gap:8px;flex-wrap:wrap; }
+.resto-actions a, .resto-actions button {
+  flex:1;min-width:80px;text-align:center;padding:8px 6px;border-radius:10px;
+  text-decoration:none;font-size:.8rem;font-weight:700;border:none;cursor:pointer; }
+@media(max-width:640px){
+  .partner-header { flex-direction:column;align-items:flex-start; }
+  .partner-header .btns { display:flex;flex-direction:column;width:100%;gap:8px; }
+  .partner-header .btns a { text-align:center; }
+  .stat-card { min-width:100px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="partner-header">
+  <div>
+    <h2 style="font-weight:800;margin-bottom:4px;font-size:clamp(1.1rem,3.5vw,1.5rem);">Dashboard Partenaire</h2>
+    <p style="opacity:.8;margin:0;font-size:.88rem;">Gérez vos commerces et produits</p>
+  </div>
+  <div class="btns" style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="{{ url_for('partner.add_restaurant') }}"
+       style="background:#dc2626;color:white;padding:10px 20px;border-radius:25px;text-decoration:none;font-weight:700;font-size:.88rem;white-space:nowrap;">
+      <i class="fas fa-plus"></i> Ajouter un commerce
+    </a>
+    <a href="{{ url_for('partner.revenus') }}"
+       style="background:rgba(16,185,129,.9);color:white;padding:10px 20px;border-radius:25px;text-decoration:none;font-weight:700;font-size:.88rem;white-space:nowrap;">
+      💰 Mes Revenus
+    </a>
+    <a href="{{ url_for('auth.logout') }}"
+       style="background:rgba(255,255,255,.15);color:white;padding:10px 20px;border-radius:25px;text-decoration:none;font-weight:700;font-size:.88rem;white-space:nowrap;">
+      Déconnexion
+    </a>
+  </div>
+</div>
+
+<div style="max-width:1100px;margin:28px auto;padding:0 clamp(10px,3vw,20px);">
+
+  <!-- Stats -->
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:30px;">
+    <div class="stat-card">
+      <div style="font-size:clamp(1.5rem,4vw,2rem);font-weight:800;color:#dc2626;">{{ restaurants|length }}</div>
+      <div style="color:#6b7280;font-size:.85rem;">Commerces</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:clamp(1.5rem,4vw,2rem);font-weight:800;color:#dc2626;">{{ total_orders }}</div>
+      <div style="color:#6b7280;font-size:.85rem;">Commandes</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:clamp(1.2rem,3vw,1.8rem);font-weight:800;color:#dc2626;">{{ total_revenue|int }}<span style="font-size:.6em;font-weight:600;"> FCFA</span></div>
+      <div style="color:#6b7280;font-size:.85rem;">Revenus totaux</div>
+    </div>
+  </div>
+
+  <!-- Commerces -->
+  <h4 style="font-weight:800;margin-bottom:18px;">Mes Commerces</h4>
+  {% if restaurants %}
+  <div style="display:flex;flex-wrap:wrap;gap:18px;">
+    {% for restaurant in restaurants %}
+    <div class="resto-card-p">
+      {{ restaurant_img(restaurant, height='clamp(140px,35vw,170px)', show_badge=true) }}
+      <div style="padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-weight:800;font-size:clamp(.9rem,2.5vw,1rem);">{{ restaurant.name }}</span>
+          <span style="background:#fef2f2;color:#dc2626;border-radius:12px;padding:2px 8px;font-size:.72rem;font-weight:700;">
+            {{ restaurant.category_icon }} {{ restaurant.category_label }}
+          </span>
+        </div>
+        <p style="font-size:.82rem;color:#6b7280;margin-bottom:14px;">
+          {{ (restaurant.description or 'Aucune description')|truncate(55) }}
+        </p>
+        <div class="resto-actions">
+          <a href="{{ url_for('partner.products', restaurant_id=restaurant.id) }}"
+             style="background:#fef3c7;color:#92400e;">
+            <i class="fas fa-box"></i> Produits
+          </a>
+          <a href="{{ url_for('partner.edit_restaurant', restaurant_id=restaurant.id) }}"
+             style="background:#dbeafe;color:#1e40af;">
+            <i class="fas fa-pen"></i> Modifier
+          </a>
+          <form method="POST" action="{{ url_for('partner.delete_restaurant', restaurant_id=restaurant.id) }}"
+                onsubmit="return confirm('Supprimer ce commerce ?')" style="flex:1;min-width:80px;">
+            <button type="submit" style="background:#fee2e2;color:#991b1b;width:100%;">
+              <i class="fas fa-trash"></i> Supprimer
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;background:white;border-radius:16px;">
+    <div style="font-size:3.5rem;margin-bottom:12px;">🏪</div>
+    <h5>Aucun commerce pour l'instant</h5>
+    <a href="{{ url_for('partner.add_restaurant') }}" class="btn btn-danger mt-3">
+      Ajouter mon premier commerce
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

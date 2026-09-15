@@ -1,0 +1,98 @@
+{#
+  _macros.html — Macros Jinja2 réutilisables QuickFood
+  Import : {% from "_macros.html" import restaurant_img, product_img %}
+#}
+
+{# ─────────────────────────────────────────────────────────────
+   restaurant_img(restaurant, height, radius, show_badge)
+   Affiche le logo du restaurant :
+     • Image uploadée si disponible
+     • Fallback SVG avec initiales + couleur dérivée du nom
+   ───────────────────────────────────────────────────────────── #}
+{% macro restaurant_img(restaurant, height="160px", radius="0", show_badge=false) %}
+  {%- set name = restaurant.name or "?" -%}
+  {%- set initials = (name.split()|map('first')|list|join('')|upper)[:2] -%}
+  {%- set colors = ["#dc2626","#ea580c","#d97706","#16a34a","#0284c7","#7c3aed","#db2777","#0f766e"] -%}
+  {%- set color = colors[name|length % colors|length] -%}
+
+  <div style="position:relative;width:100%;height:{{ height }};border-radius:{{ radius }};overflow:hidden;flex-shrink:0;">
+    {% if restaurant.image %}
+      <img
+        src="{{ url_for('static', filename='uploads/' + restaurant.image) }}"
+        alt="{{ name }}"
+        style="width:100%;height:100%;object-fit:cover;display:block;border-radius:{{ radius }};"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+      >
+      {# Fallback affiché si l'image est cassée #}
+      <div style="display:none;width:100%;height:100%;background:{{ color }};align-items:center;justify-content:center;flex-direction:column;border-radius:{{ radius }};">
+        <span style="font-size:calc({{ height }} * 0.28);font-weight:800;color:white;letter-spacing:2px;line-height:1;">{{ initials }}</span>
+        <span style="font-size:calc({{ height }} * 0.09);color:rgba(255,255,255,.7);margin-top:4px;">{{ name|truncate(18, true, '') }}</span>
+      </div>
+    {% else %}
+      <div style="display:flex;width:100%;height:100%;background:{{ color }};align-items:center;justify-content:center;flex-direction:column;border-radius:{{ radius }};">
+        <span style="font-size:calc({{ height }} * 0.28);font-weight:800;color:white;letter-spacing:2px;line-height:1;">{{ initials }}</span>
+        <span style="font-size:calc({{ height }} * 0.09);color:rgba(255,255,255,.7);margin-top:4px;">{{ name|truncate(18, true, '') }}</span>
+      </div>
+    {% endif %}
+
+    {% if show_badge and not restaurant.is_active %}
+      <span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:white;font-size:.7rem;padding:3px 8px;border-radius:20px;font-weight:600;">
+        Fermé
+      </span>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{# ─────────────────────────────────────────────────────────────
+   product_img(product, height, radius)
+   Affiche la photo du produit ou un fallback émoji + nom
+   ───────────────────────────────────────────────────────────── #}
+{% macro product_img(product, height="160px", radius="0") %}
+  {%- set name = product.name or "Produit" -%}
+  {%- set emojis = ["🍽️","🍛","🥘","🍖","🥗","🍜","🥙","🫕","🍱","🥩"] -%}
+  {%- set emoji = emojis[name|length % emojis|length] -%}
+
+  <div style="width:100%;height:{{ height }};border-radius:{{ radius }};overflow:hidden;flex-shrink:0;">
+    {% if product.image %}
+      <img
+        src="{{ url_for('static', filename='uploads/' + product.image) }}"
+        alt="{{ name }}"
+        style="width:100%;height:100%;object-fit:cover;display:block;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+      >
+      <div style="display:none;width:100%;height:100%;background:#fef2f2;align-items:center;justify-content:center;flex-direction:column;">
+        <span style="font-size:2.8rem;">{{ emoji }}</span>
+        <span style="font-size:.75rem;color:#9ca3af;margin-top:4px;">{{ name|truncate(16, true, '') }}</span>
+      </div>
+    {% else %}
+      <div style="display:flex;width:100%;height:100%;background:#fef2f2;align-items:center;justify-content:center;flex-direction:column;">
+        <span style="font-size:2.8rem;">{{ emoji }}</span>
+        <span style="font-size:.75rem;color:#9ca3af;margin-top:4px;">{{ name|truncate(16, true, '') }}</span>
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{# ─────────────────────────────────────────────────────────────
+   restaurant_avatar(restaurant, size)
+   Petit avatar circulaire pour tableaux / navbars
+   ───────────────────────────────────────────────────────────── #}
+{% macro restaurant_avatar(restaurant, size="44px") %}
+  {%- set name = restaurant.name or "?" -%}
+  {%- set initials = (name.split()|map('first')|list|join('')|upper)[:2] -%}
+  {%- set colors = ["#dc2626","#ea580c","#d97706","#16a34a","#0284c7","#7c3aed","#db2777","#0f766e"] -%}
+  {%- set color = colors[name|length % colors|length] -%}
+
+  {% if restaurant.image %}
+    <img src="{{ url_for('static', filename='uploads/' + restaurant.image) }}"
+         alt="{{ name }}"
+         style="width:{{ size }};height:{{ size }};border-radius:50%;object-fit:cover;flex-shrink:0;"
+         onerror="this.outerHTML='<div style=\'width:{{ size }};height:{{ size }};border-radius:50%;background:{{ color }};display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:.85rem;flex-shrink:0;\'>{{ initials }}</div>';">
+  {% else %}
+    <div style="width:{{ size }};height:{{ size }};border-radius:50%;background:{{ color }};display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:.85rem;flex-shrink:0;">
+      {{ initials }}
+    </div>
+  {% endif %}
+{% endmacro %}

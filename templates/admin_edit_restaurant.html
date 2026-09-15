@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Modifier restaurant - Admin{% endblock %}
+{% block content %}
+<div style="background:#1e293b;padding:14px 40px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+  <span style="color:white;font-weight:800;font-size:1rem;margin-right:10px;"><i class="fas fa-bolt"></i> Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Utilisateurs</a>
+  <a href="{{ url_for('admin.partners') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Partenaires</a>
+  <a href="{{ url_for('admin.restaurants') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Restaurants</a>
+  <a href="{{ url_for('admin.orders') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Commandes</a>
+  <a href="{{ url_for('admin.stats') }}" style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Statistiques</a>
+  <a href="{{ url_for('admin.commissions') }}" style="color:#fbbf24;text-decoration:none;font-weight:600;font-size:.9rem;">💰 Commissions</a>
+  <a href="{{ url_for('admin.drivers') }}" style="color:#34d399;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livreurs</a>
+  <a href="{{ url_for('admin.promos') }}" style="color:#f472b6;text-decoration:none;font-weight:600;font-size:.9rem;">🏷️ Promos</a>
+  <a href="{{ url_for('admin.reviews') }}" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:.9rem;">⭐ Avis</a>
+  <a href="{{ url_for('auth.logout') }}" style="margin-left:auto;color:#f87171;text-decoration:none;font-weight:600;font-size:.9rem;">Déconnexion</a>
+</div>
+
+<div style="max-width:650px;margin:50px auto;padding:0 20px;">
+  <a href="{{ url_for('admin.restaurants') }}" style="color:#dc2626;text-decoration:none;font-weight:600;">
+    <i class="fas fa-arrow-left"></i> Retour
+  </a>
+  <div style="background:white;border-radius:16px;padding:30px;box-shadow:0 8px 24px rgba(0,0,0,0.08);margin-top:20px;">
+    <h3 style="font-weight:800;margin-bottom:25px;">Modifier : {{ restaurant.name }}</h3>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nom du restaurant *</label>
+        <input type="text" name="name" class="form-control" value="{{ restaurant.name }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Description</label>
+        <textarea name="description" class="form-control" rows="3">{{ restaurant.description or '' }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Adresse</label>
+        <div class="input-group">
+          <input type="text" name="address" id="addr-field" class="form-control"
+                 value="{{ restaurant.address or '' }}" placeholder="Ex: Avenue Cheikh Anta Diop, Dakar">
+          <button type="button" class="btn btn-outline-danger" onclick="geoFillAddr()">
+            <i class="fas fa-map-marker-alt"></i>
+          </button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-semibold">Latitude (GPS)</label>
+          <input type="number" step="any" name="latitude" id="lat-field" class="form-control"
+                 value="{{ restaurant.latitude or '' }}" placeholder="14.6937">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-semibold">Longitude (GPS)</label>
+          <input type="number" step="any" name="longitude" id="lng-field" class="form-control"
+                 value="{{ restaurant.longitude or '' }}" placeholder="-17.4441">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Rayon de livraison (km)</label>
+        <input type="number" step="0.5" min="1" max="50" name="delivery_radius_km" class="form-control"
+               value="{{ restaurant.delivery_radius_km or 5.0 }}">
+      </div>
+      <!-- Catégorie -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Type de commerce</label>
+        <select name="category" class="form-select">
+          <option value="restaurant"  {% if restaurant.category == 'restaurant'  %}selected{% endif %}>🍽️ Restaurant</option>
+          <option value="supermarche" {% if restaurant.category == 'supermarche' %}selected{% endif %}>🛒 Supermarché</option>
+          <option value="fruiterie"   {% if restaurant.category == 'fruiterie'   %}selected{% endif %}>🍎 Fruiterie</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Taux de commission (%)</label>
+        <input type="number" step="0.1" min="0" max="100" name="commission_rate" class="form-control"
+               value="{{ restaurant.commission_rate or 10 }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Image</label>
+        <input type="file" name="image" class="form-control" accept="image/*">
+        {% if restaurant.image %}
+        <small class="text-muted">Image actuelle : {{ restaurant.image }}</small>
+        {% endif %}
+      </div>
+      <div class="mb-4 form-check">
+        <input type="checkbox" name="is_active" class="form-check-input" id="is_active"
+               {% if restaurant.is_active %}checked{% endif %}>
+        <label class="form-check-label fw-semibold" for="is_active">Restaurant actif</label>
+      </div>
+      <button type="submit" class="btn btn-danger w-100 fw-bold">Enregistrer les modifications</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function geoFillAddr() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    document.getElementById('lat-field').value = lat.toFixed(6);
+    document.getElementById('lng-field').value = lng.toFixed(6);
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=fr`)
+      .then(r => r.json())
+      .then(d => { document.getElementById('addr-field').value = d.display_name || ''; })
+      .catch(() => {});
+  });
+}
+</script>
+{% endblock %}

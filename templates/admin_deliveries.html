@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Gestion Livraisons - Admin{% endblock %}
+{% block content %}
+<div style="background:#1e293b;padding:14px 40px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+  <span style="color:white;font-weight:800;font-size:1rem;margin-right:10px;"><i class="fas fa-bolt"></i> Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}"   style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}"        style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Utilisateurs</a>
+  <a href="{{ url_for('admin.partners') }}"     style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Partenaires</a>
+  <a href="{{ url_for('admin.restaurants') }}"  style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Restaurants</a>
+  <a href="{{ url_for('admin.orders') }}"       style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Commandes</a>
+  <a href="{{ url_for('admin.deliveries') }}"   style="color:#38bdf8;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livraisons</a>
+  <a href="{{ url_for('admin.stats') }}"        style="color:#94a3b8;text-decoration:none;font-weight:600;font-size:.9rem;">Statistiques</a>
+  <a href="{{ url_for('admin.commissions') }}"  style="color:#fbbf24;text-decoration:none;font-weight:600;font-size:.9rem;">💰 Commissions</a>
+  <a href="{{ url_for('admin.drivers') }}" style="color:#34d399;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livreurs</a>
+  <a href="{{ url_for('admin.promos') }}" style="color:#f472b6;text-decoration:none;font-weight:600;font-size:.9rem;">🏷️ Promos</a>
+  <a href="{{ url_for('admin.reviews') }}" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:.9rem;">⭐ Avis</a>
+  <a href="{{ url_for('auth.logout') }}"        style="margin-left:auto;color:#f87171;text-decoration:none;font-weight:600;font-size:.9rem;">Déconnexion</a>
+</div>
+
+<div style="max-width:1200px;margin:40px auto;padding:0 20px;">
+  <h3 style="font-weight:800;margin-bottom:25px;">🛵 Gestion des Livraisons</h3>
+
+  <!-- Stats du jour -->
+  <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:30px;">
+    <div style="flex:1;min-width:180px;background:white;border-radius:16px;padding:22px;box-shadow:0 6px 18px rgba(0,0,0,0.07);border-top:4px solid #3b82f6;">
+      <div style="font-size:.85rem;color:#6b7280;font-weight:600;">Commandes aujourd'hui</div>
+      <div style="font-size:2rem;font-weight:800;color:#1e293b;">{{ stats.total_orders or 0 }}</div>
+    </div>
+    <div style="flex:1;min-width:180px;background:white;border-radius:16px;padding:22px;box-shadow:0 6px 18px rgba(0,0,0,0.07);border-top:4px solid #10b981;">
+      <div style="font-size:.85rem;color:#6b7280;font-weight:600;">Revenus livraison (aujourd'hui)</div>
+      <div style="font-size:2rem;font-weight:800;color:#10b981;">{{ (stats.total_fees or 0)|int }} FCFA</div>
+    </div>
+    <div style="flex:1;min-width:180px;background:white;border-radius:16px;padding:22px;box-shadow:0 6px 18px rgba(0,0,0,0.07);border-top:4px solid #f59e0b;">
+      <div style="font-size:.85rem;color:#6b7280;font-weight:600;">Distance moyenne</div>
+      <div style="font-size:2rem;font-weight:800;color:#f59e0b;">
+        {% if stats.avg_distance %}{{ "%.1f"|format(stats.avg_distance) }} km{% else %}N/A{% endif %}
+      </div>
+    </div>
+    <div style="flex:1;min-width:180px;background:white;border-radius:16px;padding:22px;box-shadow:0 6px 18px rgba(0,0,0,0.07);border-top:4px solid #dc2626;">
+      <div style="font-size:.85rem;color:#6b7280;font-weight:600;">En cours</div>
+      <div style="font-size:2rem;font-weight:800;color:#dc2626;">{{ active_orders|length }}</div>
+    </div>
+  </div>
+
+  <!-- Commandes actives -->
+  <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 6px 18px rgba(0,0,0,0.07);margin-bottom:30px;">
+    <h5 style="font-weight:800;margin-bottom:18px;color:#1e293b;">
+      <i class="fas fa-fire" style="color:#f59e0b;"></i> Commandes en cours
+    </h5>
+    {% if active_orders %}
+    <div style="overflow-x:auto;">
+      <table class="table table-hover">
+        <thead style="background:#f8fafc;">
+          <tr>
+            <th>#</th>
+            <th>Client</th>
+            <th>Restaurant</th>
+            <th>Adresse livraison</th>
+            <th>Distance</th>
+            <th>Frais</th>
+            <th>Total</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in active_orders %}
+          <tr>
+            <td class="fw-bold">#{{ order.id }}</td>
+            <td>
+              {{ order.user.name if order.user else 'N/A' }}<br>
+              <small class="text-muted">{{ order.delivery_phone or '' }}</small>
+            </td>
+            <td>{{ order.restaurant.name if order.restaurant else 'N/A' }}</td>
+            <td style="max-width:200px;font-size:.85rem;">
+              {{ order.delivery_address or 'N/A' }}
+              {% if order.delivery_latitude and order.delivery_longitude %}
+              <br><a href="https://maps.google.com/?q={{ order.delivery_latitude }},{{ order.delivery_longitude }}"
+                     target="_blank" style="font-size:.78rem;color:#dc2626;">
+                <i class="fas fa-map-marker-alt"></i> Voir sur carte
+              </a>
+              {% endif %}
+            </td>
+            <td>
+              {% if order.delivery_distance %}
+                <span style="font-weight:600;">{{ "%.1f"|format(order.delivery_distance) }} km</span>
+              {% elif order.delivery_latitude and order.delivery_longitude and order.restaurant and order.restaurant.latitude and order.restaurant.longitude %}
+                {% set dlat = order.delivery_latitude - order.restaurant.latitude %}
+                {% set dlng = order.delivery_longitude - order.restaurant.longitude %}
+                {% set approx = ((dlat**2 + dlng**2)**0.5 * 111) %}
+                <span style="font-weight:600;color:#f59e0b;">~{{ "%.1f"|format(approx) }} km</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>{{ (order.delivery_fee or 0)|int }} FCFA</td>
+            <td class="fw-bold" style="color:#dc2626;">{{ (order.total_amount or 0)|int }} FCFA</td>
+            <td>
+              <span class="badge
+                {% if order.status == 'En préparation' %}bg-warning text-dark
+                {% elif order.status == 'En livraison' %}bg-info
+                {% else %}bg-secondary{% endif %}">
+                {{ order.status }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.update_delivery_status', order_id=order.id) }}" style="display:flex;gap:4px;flex-wrap:wrap;">
+                <select name="status" class="form-select form-select-sm" style="width:auto;">
+                  {% for s in ['En préparation','Prête','Livreur assigné','En livraison','Livrée','Annulée'] %}
+                  <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-danger">✓</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:#9ca3af;">
+      <i class="fas fa-check-circle" style="font-size:2.5rem;color:#10b981;margin-bottom:10px;"></i>
+      <p>Aucune livraison en cours. Tout est livré ! 🎉</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Historique récent -->
+  <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 6px 18px rgba(0,0,0,0.07);">
+    <h5 style="font-weight:800;margin-bottom:18px;color:#1e293b;">
+      <i class="fas fa-history" style="color:#6b7280;"></i> Livraisons récentes (30 dernières)
+    </h5>
+    {% if recent_orders %}
+    <div style="overflow-x:auto;">
+      <table class="table table-sm">
+        <thead style="background:#f8fafc;">
+          <tr>
+            <th>#</th><th>Date</th><th>Client</th><th>Restaurant</th>
+            <th>Distance</th><th>Frais</th><th>Total</th><th>Paiement</th><th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td class="fw-bold">#{{ order.id }}</td>
+            <td style="font-size:.82rem;">{{ order.created_at.strftime('%d/%m %H:%M') }}</td>
+            <td>{{ order.user.name if order.user else 'N/A' }}</td>
+            <td>{{ order.restaurant.name if order.restaurant else 'N/A' }}</td>
+            <td>
+              {% if order.delivery_distance %}{{ "%.1f"|format(order.delivery_distance) }} km
+              {% elif order.delivery_latitude and order.delivery_longitude and order.restaurant and order.restaurant.latitude and order.restaurant.longitude %}
+                {% set dlat = order.delivery_latitude - order.restaurant.latitude %}
+                {% set dlng = order.delivery_longitude - order.restaurant.longitude %}
+                ~{{ "%.1f"|format(((dlat**2+dlng**2)**0.5*111)) }} km
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ (order.delivery_fee or 0)|int }} FCFA</td>
+            <td class="fw-bold">{{ (order.total_amount or 0)|int }} FCFA</td>
+            <td>
+              <span class="badge {% if order.payment_status == 'success' %}bg-success{% else %}bg-secondary{% endif %}">
+                {% if order.payment_status == 'success' %}Payé{% else %}À la livraison{% endif %}
+              </span>
+            </td>
+            <td>
+              <span class="badge {% if order.status == 'Livrée' %}bg-success{% elif order.status == 'Annulée' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                {{ order.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-4">Aucune livraison récente.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

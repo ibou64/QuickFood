@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "_macros.html" import restaurant_img %}
+{% block title %}Modifier commerce - QuickFood{% endblock %}
+{% block content %}
+<div style="max-width:650px;margin:50px auto;padding:0 20px;">
+  <a href="{{ url_for('partner.dashboard') }}" style="color:#dc2626;text-decoration:none;font-weight:600;">
+    <i class="fas fa-arrow-left"></i> Retour
+  </a>
+  <div style="background:white;border-radius:16px;padding:30px;box-shadow:0 8px 24px rgba(0,0,0,0.08);margin-top:20px;">
+    <h3 style="font-weight:800;color:#dc2626;margin-bottom:25px;">Modifier : {{ restaurant.name }}</h3>
+    <form method="POST" enctype="multipart/form-data">
+
+      <!-- Type de commerce -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Type de commerce</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          {% for cat_key, cat_info in [('restaurant',{'icon':'🍽️','label':'Restaurant'}),('supermarche',{'icon':'🛒','label':'Supermarché'}),('fruiterie',{'icon':'🍎','label':'Fruiterie'})] %}
+          <label style="flex:1;min-width:120px;border:2px solid {% if restaurant.category == cat_key %}#dc2626{% else %}#e5e7eb{% endif %};background:{% if restaurant.category == cat_key %}#fef2f2{% else %}white{% endif %};border-radius:12px;padding:12px;cursor:pointer;text-align:center;transition:.2s;" id="lbl-{{ cat_key }}">
+            <input type="radio" name="category" value="{{ cat_key }}" {% if restaurant.category == cat_key %}checked{% endif %} style="display:none;">
+            <div style="font-size:1.8rem;">{{ cat_info.icon }}</div>
+            <strong style="font-size:.85rem;display:block;margin-top:4px;">{{ cat_info.label }}</strong>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nom *</label>
+        <input type="text" name="name" class="form-control" value="{{ restaurant.name }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Description</label>
+        <textarea name="description" class="form-control" rows="3">{{ restaurant.description or '' }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          Adresse
+          <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="geoFill()">
+            <i class="fas fa-map-marker-alt"></i> Ma position
+          </button>
+        </label>
+        <input type="text" name="address" id="addr" class="form-control" value="{{ restaurant.address or '' }}">
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-semibold">Latitude</label>
+          <input type="number" step="any" name="latitude" id="lat" class="form-control" value="{{ restaurant.latitude or '' }}">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label fw-semibold">Longitude</label>
+          <input type="number" step="any" name="longitude" id="lng" class="form-control" value="{{ restaurant.longitude or '' }}">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Rayon de livraison (km)</label>
+        <input type="number" step="0.5" min="1" max="50" name="delivery_radius_km" class="form-control" value="{{ restaurant.delivery_radius_km or 5.0 }}">
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Nouvelle image (optionnel)</label>
+        <div class="mb-2" style="width:120px;border-radius:10px;overflow:hidden;">
+          {{ restaurant_img(restaurant, height='80px', radius='10px') }}
+        </div>
+        <input type="file" name="image" class="form-control" accept="image/*">
+      </div>
+      <button type="submit" class="btn btn-danger w-100 fw-bold py-2">
+        <i class="fas fa-save"></i> Enregistrer
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('input[name="category"]').forEach(function(radio){
+  radio.addEventListener('change',function(){
+    ['lbl-restaurant','lbl-supermarche','lbl-fruiterie','lbl-boulangerie'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){el.style.borderColor='#e5e7eb';el.style.background='white';}
+    });
+    var lbl=document.getElementById('lbl-'+this.value);
+    if(lbl){lbl.style.borderColor='#dc2626';lbl.style.background='#fef2f2';}
+  });
+});
+function geoFill(){
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var la=pos.coords.latitude,lo=pos.coords.longitude;
+    document.getElementById('lat').value=la.toFixed(6);
+    document.getElementById('lng').value=lo.toFixed(6);
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+la+'&lon='+lo+'&accept-language=fr')
+      .then(function(r){return r.json();}).then(function(d){document.getElementById('addr').value=d.display_name||'';});
+  });
+}
+</script>
+{% endblock %}

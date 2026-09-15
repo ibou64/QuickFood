@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}Split Payment — Admin QuickFood{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-nav { background:#1e293b; padding:14px 40px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+  .admin-nav a { color:#94a3b8; text-decoration:none; font-weight:600; font-size:.9rem; transition:.2s; }
+  .admin-nav a:hover, .admin-nav a.active { color:white; }
+
+  .kpi { background:white; border-radius:14px; padding:22px 20px; box-shadow:0 6px 20px rgba(0,0,0,.07); text-align:center; }
+  .kpi-num   { font-size:1.7rem; font-weight:800; }
+  .kpi-label { color:#6b7280; font-size:.8rem; margin-top:4px; }
+
+  .card  { background:white; border-radius:16px; padding:26px; box-shadow:0 6px 20px rgba(0,0,0,.07); margin-bottom:28px; }
+
+  table  { width:100%; border-collapse:collapse; font-size:.86rem; }
+  thead tr { background:#1e293b; color:white; }
+  th, td { padding:11px 13px; text-align:right; }
+  th:first-child, td:first-child { text-align:left; }
+  tbody tr:nth-child(even) { background:#f8fafc; }
+  tbody tr:hover { background:#fef2f2; }
+
+  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+  .badge-done    { background:#d1fae5; color:#065f46; }
+  .badge-pending { background:#fef3c7; color:#92400e; }
+  .badge-error   { background:#fee2e2; color:#991b1b; }
+
+  .filter-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:22px; }
+  .filter-bar select, .filter-bar a, .filter-bar button {
+    padding:8px 14px; border-radius:10px; border:1px solid #e5e7eb;
+    font-size:.86rem; background:white; cursor:pointer; text-decoration:none; color:#374151; }
+  .filter-bar button.primary { background:#dc2626; color:white; border:none; font-weight:700; }
+  .filter-bar a.reset { color:#6b7280; border-color:transparent; }
+
+  .split-bar { display:flex; height:8px; border-radius:6px; overflow:hidden; margin-top:6px; }
+  .split-qf  { background:#dc2626; }
+  .split-rst { background:#10b981; }
+  .split-dlv { background:#3b82f6; }
+
+  @media (max-width:640px) {
+    .admin-nav { padding:12px 16px; gap:12px; }
+    th, td { padding:9px 8px; font-size:.8rem; }
+  }
+  @media print {
+    .admin-nav, .filter-bar, .no-print { display:none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="admin-nav">
+  <span style="color:white;font-weight:800;font-size:1rem;margin-right:8px;"><i class="fas fa-bolt"></i> Admin</span>
+  <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('admin.orders') }}">Commandes</a>
+  <a href="{{ url_for('admin.commissions') }}">Commissions</a>
+  <a href="{{ url_for('admin.drivers') }}" style="color:#34d399;text-decoration:none;font-weight:600;font-size:.9rem;">🛵 Livreurs</a>
+  <a href="{{ url_for('admin.promos') }}" style="color:#f472b6;text-decoration:none;font-weight:600;font-size:.9rem;">🏷️ Promos</a>
+  <a href="{{ url_for('admin.reviews') }}" style="color:#60a5fa;text-decoration:none;font-weight:600;font-size:.9rem;">⭐ Avis</a>
+  <a href="{{ url_for('admin.splits') }}" class="active" style="color:white;">💸 Split Payment</a>
+  <a href="{{ url_for('admin.deliveries') }}" style="color:#38bdf8;">🛵 Livraisons</a>
+  <a href="{{ url_for('auth.logout') }}" style="margin-left:auto;color:#f87171;">Déconnexion</a>
+</div>
+
+<div style="max-width:1250px;margin:36px auto;padding:0 20px;">
+
+  <!-- En-tête -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:26px;">
+    <div>
+      <h2 style="font-weight:800;margin-bottom:4px;">💸 Split Payment</h2>
+      <p style="color:#6b7280;margin:0;">Répartition automatique après confirmation PayTech — commandes payées en ligne</p>
+    </div>
+    <div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button onclick="window.print()" style="background:#1e293b;color:white;padding:9px 18px;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:.88rem;">
+        <i class="fas fa-print"></i> Imprimer
+      </button>
+      <a href="{{ url_for('admin.export_splits') }}" style="background:#10b981;color:white;padding:9px 18px;border-radius:10px;font-weight:600;font-size:.88rem;text-decoration:none;">
+        <i class="fas fa-file-csv"></i> Exporter CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:28px;">
+    <div class="kpi">
+      <div class="kpi-num" style="color:#1e293b;">{{ total_collected|int|format_number }}</div>
+      <div class="kpi-label">Total encaissé (FCFA)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#dc2626;">{{ total_commission|int|format_number }}</div>
+      <div class="kpi-label">Commission QuickFood</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#3b82f6;">{{ total_delivery|int|format_number }}</div>
+      <div class="kpi-label">Frais de livraison</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#10b981;">{{ total_restaurant|int|format_number }}</div>
+      <div class="kpi-label">Dû aux restaurants</div>
+    </div>
+    <div class="kpi">
+      {% if pending_count > 0 %}
+      <div class="kpi-num" style="color:#f59e0b;">{{ pending_count }}</div>
+      <div class="kpi-label">Splits en attente ⚠️</div>
+      {% else %}
+      <div class="kpi-num" style="color:#10b981;">✓</div>
+      <div class="kpi-label">Tous les splits OK</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Barre visuelle de répartition -->
+  {% if total_collected > 0 %}
+  {% set pct_comm = ((total_commission / total_collected) * 100)|round(1) %}
+  {% set pct_dlv  = ((total_delivery  / total_collected) * 100)|round(1) %}
+  {% set pct_rst  = ((total_restaurant / total_collected) * 100)|round(1) %}
+  <div class="card" style="padding:20px 26px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-weight:700;font-size:.9rem;">Répartition du chiffre d'affaires</span>
+      <span style="font-size:.82rem;color:#6b7280;">{{ orders|length }} commandes</span>
+    </div>
+    <div class="split-bar">
+      <div class="split-qf"  style="width:{{ pct_comm }}%;"></div>
+      <div class="split-dlv" style="width:{{ pct_dlv  }}%;"></div>
+      <div class="split-rst" style="width:{{ pct_rst  }}%;"></div>
+    </div>
+    <div style="display:flex;gap:20px;margin-top:10px;font-size:.82rem;flex-wrap:wrap;">
+      <span><span style="display:inline-block;width:12px;height:12px;background:#dc2626;border-radius:3px;margin-right:5px;"></span>Commission QF : <strong>{{ pct_comm }}%</strong></span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:#3b82f6;border-radius:3px;margin-right:5px;"></span>Livraison : <strong>{{ pct_dlv }}%</strong></span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:#10b981;border-radius:3px;margin-right:5px;"></span>Restaurant : <strong>{{ pct_rst }}%</strong></span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filtres -->
+  <form method="GET" class="filter-bar no-print">
+    <label style="font-weight:600;font-size:.86rem;">Période :</label>
+    <select name="period">
+      <option value="all"   {% if period=='all'   %}selected{% endif %}>Tout</option>
+      <option value="month" {% if period=='month' %}selected{% endif %}>30 jours</option>
+      <option value="week"  {% if period=='week'  %}selected{% endif %}>7 jours</option>
+    </select>
+    <select name="restaurant_id">
+      <option value="">Tous les restaurants</option>
+      {% for r in restaurants %}
+      <option value="{{ r.id }}" {% if selected_restaurant == r.id|string %}selected{% endif %}>{{ r.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="split_status">
+      <option value="">Tous les statuts</option>
+      <option value="done"    {% if status_filter=='done'    %}selected{% endif %}>✓ Done</option>
+      <option value="pending" {% if status_filter=='pending' %}selected{% endif %}>⏳ Pending</option>
+      <option value="error"   {% if status_filter=='error'   %}selected{% endif %}>❌ Erreur</option>
+    </select>
+    <button type="submit" class="primary"><i class="fas fa-filter"></i> Filtrer</button>
+    <a href="{{ url_for('admin.splits') }}" class="reset">Réinitialiser</a>
+  </form>
+
+  <!-- Table -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    {% if orders %}
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th style="text-align:left;">Restaurant</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Sous-total</th>
+            <th>Livraison</th>
+            <th>Taux</th>
+            <th>Commission QF</th>
+            <th style="color:#10b981;">Net Restaurant</th>
+            <th>Split</th>
+            <th class="no-print">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td style="font-weight:700;color:#dc2626;">#{{ o.id }}</td>
+            <td style="text-align:left;">{{ o.restaurant.name if o.restaurant else '—' }}</td>
+            <td style="color:#6b7280;">{{ o.created_at.strftime('%d/%m/%y %H:%M') }}</td>
+            <td style="font-weight:700;">{{ (o.total_amount or 0)|int|format_number }}</td>
+            <td>{{ (o.subtotal or 0)|int|format_number }}</td>
+            <td style="color:#3b82f6;">{{ (o.delivery_fee or 0)|int|format_number }}</td>
+            <td>
+              {% if o.commission_rate %}
+                <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:700;">
+                  {{ o.commission_rate }}%
+                </span>
+              {% else %}—{% endif %}
+            </td>
+            <td style="color:#dc2626;font-weight:600;">
+              {{ (o.commission_amount or 0)|int|format_number if o.split_status=='done' else '—' }}
+            </td>
+            <td style="color:#10b981;font-weight:700;">
+              {{ (o.restaurant_amount or 0)|int|format_number if o.split_status=='done' else '—' }}
+            </td>
+            <td>
+              {% if o.split_status == 'done' %}
+                <span class="badge badge-done">✓ Done</span>
+              {% elif o.split_status == 'error' %}
+                <span class="badge badge-error">❌ Erreur</span>
+              {% else %}
+                <span class="badge badge-pending">⏳ Pending</span>
+              {% endif %}
+            </td>
+            <td class="no-print">
+              {% if o.split_status != 'done' %}
+              <form method="POST" action="{{ url_for('admin.recalc_split', order_id=o.id) }}">
+                <button type="submit"
+                  style="background:#dc2626;color:white;border:none;border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer;font-weight:600;">
+                  Recalculer
+                </button>
+              </form>
+              {% else %}
+                <span style="color:#10b981;font-size:.78rem;">
+                  {{ o.split_done_at.strftime('%d/%m %H:%M') if o.split_done_at else '' }}
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#fef2f2;font-weight:800;font-size:.88rem;">
+            <td colspan="3" style="text-align:left;padding:12px 13px;">TOTAUX</td>
+            <td>{{ total_collected|int|format_number }}</td>
+            <td></td>
+            <td style="color:#3b82f6;">{{ total_delivery|int|format_number }}</td>
+            <td></td>
+            <td style="color:#dc2626;">{{ total_commission|int|format_number }}</td>
+            <td style="color:#10b981;">{{ total_restaurant|int|format_number }}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:#9ca3af;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">💸</div>
+      <p style="font-weight:600;">Aucune commande payée sur cette période.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Légende -->
+  <div class="card" style="background:#f8fafc;border:1px solid #e2e8f0;">
+    <h6 style="font-weight:700;margin-bottom:14px;">📐 Formule de calcul du split</h6>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;font-size:.86rem;">
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #dc2626;">
+        <strong>Commission QuickFood</strong><br>
+        Sous-total articles × taux du restaurant
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #3b82f6;">
+        <strong>Frais de livraison</strong><br>
+        100 % QuickFood (hors commission)
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #10b981;">
+        <strong>Net restaurant</strong><br>
+        Sous-total − commission
+      </div>
+      <div style="background:white;padding:14px;border-radius:10px;border-left:4px solid #f59e0b;">
+        <strong>Split déclenché par</strong><br>
+        Webhook IPN PayTech → type_event=sale_complete
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

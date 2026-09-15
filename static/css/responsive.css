@@ -1,0 +1,67 @@
+/* ═══════════════════════════════════════════════════
+   QuickFood — CSS Responsive Global
+   Breakpoints : 480px | 640px | 768px | 1024px
+═══════════════════════════════════════════════════ */
+
+/* ── Reset box-sizing ─────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Viewport meta déjà dans base.html ─────────── */
+
+/* ── Tables scrollables sur mobile ─────────────── */
+.table-responsive-qf { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Utilitaires flex responsive ───────────────── */
+@media (max-width: 640px) {
+  .flex-col-mobile { flex-direction: column !important; }
+  .w-full-mobile   { width: 100% !important; }
+  .text-center-mobile { text-align: center !important; }
+  .hide-mobile     { display: none !important; }
+  .gap-sm-mobile   { gap: 8px !important; }
+  .px-mobile       { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+/* ── Formulaires ────────────────────────────────── */
+@media (max-width: 640px) {
+  .form-control, .form-select, .btn {
+    font-size: 16px !important; /* évite le zoom iOS sur focus */
+  }
+}
+
+/* ── Navbar burger déjà géré dans base.html ──────── */
+
+/* ── Navbars admin (horizontal scroll) ─────────── */
+@media (max-width: 768px) {
+  .admin-nav-bar {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .admin-nav-bar a { white-space: nowrap; }
+}
+
+/* ── Cards grilles ──────────────────────────────── */
+@media (max-width: 480px) {
+  .resto-card, .home-card { width: calc(50% - 8px) !important; min-width: 0 !important; }
+  .pub-slide { width: 150px !important; height: 240px !important; }
+}
+@media (max-width: 360px) {
+  .resto-card, .home-card { width: 100% !important; }
+}
+
+/* ── Tables admin ───────────────────────────────── */
+@media (max-width: 768px) {
+  .qf-table-wrap { overflow-x: auto; border-radius: 12px; }
+  .qf-table-wrap table { min-width: 600px; }
+}
+
+/* ── Panneau panier sticky ──────────────────────── */
+@media (max-width: 992px) {
+  .cart-summary-sticky { position: static !important; }
+}
+
+/* ── Padding pages sur mobile ───────────────────── */
+@media (max-width: 640px) {
+  .qf-page { padding: 0 12px !important; margin-top: 24px !important; }
+}

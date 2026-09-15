@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Livreurs - Admin{% endblock %}
+{% block content %}
+{% from "admin_nav.html" import admin_nav %}
+{{ admin_nav(active="drivers") }}
+
+<div style="max-width:1100px;margin:40px auto;padding:0 20px;">
+  <h3 style="font-weight:800;margin-bottom:8px;">🛵 Livreurs</h3>
+  <p style="color:#6b7280;margin-bottom:25px;">Créez un compte livreur, il recevra un mot de passe temporaire à transmettre.</p>
+
+  <div style="background:white;border-radius:16px;box-shadow:0 8px 22px rgba(0,0,0,0.07);padding:24px;margin-bottom:28px;">
+    <h5 style="font-weight:700;margin-bottom:16px;">Ajouter un livreur</h5>
+    <form method="POST" action="{{ url_for('admin.add_driver') }}" class="row g-3">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div class="col-md-3"><input class="form-control" name="name" placeholder="Nom complet" required></div>
+      <div class="col-md-3"><input class="form-control" type="email" name="email" placeholder="Email" required></div>
+      <div class="col-md-2"><input class="form-control" name="phone" placeholder="Téléphone" required></div>
+      <div class="col-md-2">
+        <select class="form-select" name="vehicle_type">
+          <option value="moto">🏍️ Moto</option>
+          <option value="velo">🚲 Vélo</option>
+          <option value="voiture">🚗 Voiture</option>
+          <option value="pied">🚶 À pied</option>
+        </select>
+      </div>
+      <div class="col-md-2"><input class="form-control" name="plate_number" placeholder="Immatriculation"></div>
+      <div class="col-12"><button class="btn btn-dark fw-bold" type="submit"><i class="fas fa-plus"></i> Créer le compte livreur</button></div>
+    </form>
+  </div>
+
+  <div style="background:white;border-radius:16px;box-shadow:0 8px 22px rgba(0,0,0,0.07);overflow:hidden;">
+    <table class="table table-hover mb-0">
+      <thead style="background:#1e293b;color:white;">
+        <tr><th>#</th><th>Nom</th><th>Téléphone</th><th>Véhicule</th><th>Note</th><th>Livraisons</th><th>Statut</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for d in drivers %}
+        <tr>
+          <td>{{ d.id }}</td>
+          <td class="fw-semibold">{{ d.user.name }}</td>
+          <td>{{ d.phone }}</td>
+          <td>{{ d.vehicle_type }} {% if d.plate_number %}<small class="text-muted">({{ d.plate_number }})</small>{% endif %}</td>
+          <td>⭐ {{ "%.1f"|format(d.rating_avg or 5.0) }}</td>
+          <td>{{ d.total_deliveries or 0 }}</td>
+          <td>
+            {% if not d.is_active %}<span class="badge bg-secondary">Désactivé</span>
+            {% elif d.is_available %}<span class="badge bg-success">En ligne</span>
+            {% else %}<span class="badge bg-warning text-dark">Hors ligne</span>{% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.toggle_driver', driver_id=d.id) }}" class="d-inline">
+              <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm {{ 'btn-outline-danger' if d.is_active else 'btn-outline-success' }}">
+                {{ 'Désactiver' if d.is_active else 'Activer' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">Aucun livreur pour le moment.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Confirmer la commande - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+  .pay-card {
+    flex:1; min-width:180px; border:2px solid #e5e7eb; border-radius:16px;
+    padding:20px 14px; cursor:pointer; text-align:center; transition:.2s;
+    background:white; user-select:none;
+  }
+  .pay-card:hover { border-color:#dc2626; box-shadow:0 4px 14px rgba(220,38,38,.15); }
+  .pay-card.selected { border-color:#dc2626; box-shadow:0 4px 14px rgba(220,38,38,.2); }
+  .pay-card input[type=radio] { display:none; }
+  #geo-btn { cursor:pointer; }
+  #address-input.geo-filled { border-color:#10b981; }
+  #geo-status-msg { font-size:.83rem; color:#6b7280; margin-top:5px; min-height:18px; }
+  .fee-preview-box { background:#fef2f2; border-left:4px solid #dc2626; border-radius:10px; padding:12px 16px; margin-bottom:18px; display:none; }
+  #btn-submit { transition:.2s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:750px;margin:50px auto;padding:0 20px;">
+  <a href="{{ url_for('cart.view') }}" style="color:#dc2626;text-decoration:none;font-weight:600;font-size:.9rem;">
+    <i class="fas fa-arrow-left"></i> Retour au panier
+  </a>
+  <h2 style="font-weight:800;margin:18px 0 28px;">Confirmation de commande 📦</h2>
+
+  {% if restaurant %}
+  <div style="background:#fef2f2;border-radius:12px;padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+    <i class="fas fa-store" style="color:#dc2626;"></i>
+    <span style="font-weight:600;">{{ restaurant.name }}</span>
+    {% if restaurant.address %}
+    <span style="color:#6b7280;font-size:.88rem;">· {{ restaurant.address }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Récap commande -->
+  <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 8px 22px rgba(0,0,0,0.08);margin-bottom:25px;">
+    <h5 style="font-weight:700;margin-bottom:15px;">Votre commande</h5>
+    <table class="table table-sm">
+      <thead><tr><th>Produit</th><th class="text-end">Qté</th><th class="text-end">Sous-total</th></tr></thead>
+      <tbody>
+        {% for pid, item in cart.items() %}
+        <tr>
+          <td>{{ item['name'] }}</td>
+          <td class="text-end">{{ item['quantity'] }}</td>
+          <td class="text-end">{{ (item['price'] * item['quantity'])|int }} FCFA</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <hr>
+    <div class="d-flex justify-content-between">
+      <span>Sous-total</span>
+      <strong>{{ (subtotal or 0)|int }} FCFA</strong>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+      <span>Livraison <small id="dist-label" class="text-muted"></small></span>
+      <strong id="fee-display">{{ delivery_fee|int }} FCFA</strong>
+    </div>
+    {% if discount %}
+    <div class="d-flex justify-content-between" style="color:var(--qf-success);">
+      <span><i class="fas fa-tag"></i> Code {{ promo_code }}</span>
+      <strong>− {{ discount|int }} FCFA</strong>
+    </div>
+    {% endif %}
+    <div class="d-flex justify-content-between mt-2">
+      <h5 class="mb-0">Total</h5>
+      <h5 class="mb-0" style="color:#dc2626;" id="total-display">{{ (total or 0)|int }} FCFA</h5>
+    </div>
+  </div>
+
+  <!-- Frais dynamiques -->
+  <div class="fee-preview-box" id="fee-preview-box">
+    <i class="fas fa-motorcycle" style="color:#dc2626;"></i>
+    <span id="fee-preview-text" style="font-size:.9rem;margin-left:6px;"></span>
+  </div>
+
+  <!-- Formulaire -->
+  <div style="background:white;border-radius:16px;padding:25px;box-shadow:0 8px 22px rgba(0,0,0,0.08);">
+    <h5 style="font-weight:700;margin-bottom:20px;">Informations de livraison</h5>
+
+    <form method="POST" action="{{ url_for('cart.confirm_order') }}" id="order-form">
+      <input type="hidden" name="delivery_lat" id="field-lat">
+      <input type="hidden" name="delivery_lng" id="field-lng">
+      <input type="hidden" name="payment_method" id="field-payment" value="cash">
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nom complet</label>
+        <input type="text" name="name" class="form-control" value="{{ current_user.name }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Téléphone</label>
+        <input type="tel" name="phone" class="form-control" placeholder="77 000 00 00" required>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-semibold">
+          Adresse de livraison
+          <button type="button" id="geo-btn" onclick="autoFillAddress()"
+            style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:20px;padding:2px 12px;font-size:.8rem;font-weight:600;margin-left:8px;">
+            <i class="fas fa-map-marker-alt"></i> Ma position
+          </button>
+        </label>
+        <input type="text" name="address" id="address-input" class="form-control"
+               placeholder="Ex: Rue 10, Dakar Plateau" required>
+        <div id="geo-status-msg"></div>
+      </div>
+
+      <!-- Choix paiement — chaque carte = bouton de soumission -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Mode de paiement</label>
+        <p style="font-size:.83rem;color:#6b7280;margin-bottom:12px;">
+          Cliquez sur un mode pour valider immédiatement votre commande.
+        </p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;">
+
+          <!-- Paiement à la livraison -->
+          <div class="pay-card selected" id="card-cash" onclick="submitWith('cash')">
+            <i class="fas fa-money-bill-wave" style="font-size:2rem;color:#10b981;margin-bottom:8px;display:block;"></i>
+            <strong style="font-size:.92rem;display:block;margin-bottom:4px;">À la livraison</strong>
+            <span style="font-size:.78rem;color:#6b7280;">Cash à la réception</span>
+          </div>
+
+          <!-- Wave -->
+          <div class="pay-card" id="card-wave" onclick="submitWith('online')">
+            <i class="fas fa-bolt" style="font-size:2rem;color:#0ea5e9;margin-bottom:8px;display:block;"></i>
+            <strong style="font-size:.92rem;display:block;margin-bottom:4px;">Wave</strong>
+            <span style="font-size:.78rem;color:#6b7280;">Paiement instantané</span>
+          </div>
+
+          <!-- Orange Money -->
+          <div class="pay-card" id="card-orange" onclick="submitWith('online')">
+            <i class="fas fa-mobile-alt" style="font-size:2rem;color:#f97316;margin-bottom:8px;display:block;"></i>
+            <strong style="font-size:.92rem;display:block;margin-bottom:4px;">Orange Money</strong>
+            <span style="font-size:.78rem;color:#6b7280;">via PayTech</span>
+          </div>
+
+          <!-- Carte bancaire -->
+          <div class="pay-card" id="card-visa" onclick="submitWith('online')">
+            <i class="fas fa-credit-card" style="font-size:2rem;color:#6366f1;margin-bottom:8px;display:block;"></i>
+            <strong style="font-size:.92rem;display:block;margin-bottom:4px;">Carte bancaire</strong>
+            <span style="font-size:.78rem;color:#6b7280;">Visa / Mastercard</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bouton principal visible -->
+      <!-- Mention CGU -->
+      <p style="font-size:.78rem;color:#9ca3af;text-align:center;margin-bottom:10px;">
+        En validant, vous acceptez les
+        <a href="{{ url_for('main.cgu') }}" target="_blank" style="color:#dc2626;text-decoration:none;font-weight:600;">CGU</a>
+        de QuickFood.
+      </p>
+      <button type="submit" id="btn-submit" class="btn btn-danger w-100 fw-bold py-2 mt-2">
+        <i class="fas fa-check-circle"></i>
+        <span id="btn-label">Valider — Paiement à la livraison</span>
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var subtotalBase = {{ (subtotal or 0)|int }};
+var discountBase = {{ (discount or 0)|int }};
+var selectedMethod = 'cash';
+
+// ── Sélection du mode de paiement ───────────────────────
+function selectCard(method) {
+  selectedMethod = method;
+  document.getElementById('field-payment').value = method;
+
+  // Reset toutes les cartes
+  ['card-cash','card-wave','card-orange','card-visa'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('selected');
+  });
+
+  // Mettre à jour le bouton principal
+  var btnLabel = document.getElementById('btn-label');
+  if (method === 'cash') {
+    document.getElementById('card-cash').classList.add('selected');
+    btnLabel.textContent = 'Valider — Paiement à la livraison';
+  } else {
+    btnLabel.textContent = 'Valider — Payer en ligne';
+  }
+}
+
+function submitWith(method) {
+  // Vérifier que le formulaire est valide
+  var form = document.getElementById('order-form');
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  selectCard(method);
+  // Soumettre immédiatement
+  form.submit();
+}
+
+// ── Haversine & frais ────────────────────────────────────
+function haversine(lat1, lon1, lat2, lon2) {
+  var R = 6371;
+  var dLat = (lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function feeFromKm(km) {
+  if(km<=2) return 500; if(km<=5) return 1000;
+  if(km<=10) return 1500; if(km<=20) return 2500; return 3500;
+}
+
+function updateFeeUI(lat, lng) {
+  {% if restaurant and restaurant.latitude and restaurant.longitude %}
+  var rLat = {{ restaurant.latitude }}, rLng = {{ restaurant.longitude }};
+  var dist = haversine(lat, lng, rLat, rLng);
+  var fee  = feeFromKm(dist);
+  var total = subtotalBase + fee - discountBase;
+  var label = dist < 1 ? Math.round(dist*1000)+' m' : dist.toFixed(1)+' km';
+
+  document.getElementById('fee-display').textContent   = fee.toLocaleString('fr-FR')+' FCFA';
+  document.getElementById('total-display').textContent = total.toLocaleString('fr-FR')+' FCFA';
+  document.getElementById('dist-label').textContent    = '('+label+')';
+
+  var box = document.getElementById('fee-preview-box');
+  box.style.display = 'block';
+  document.getElementById('fee-preview-text').innerHTML =
+    '📍 Distance : <strong>'+label+'</strong> — Frais : <strong style="color:#dc2626;">'+fee.toLocaleString('fr-FR')+' FCFA</strong>';
+  {% endif %}
+}
+
+// ── Géolocalisation ──────────────────────────────────────
+function autoFillAddress() {
+  var btn = document.getElementById('geo-btn');
+  var msg = document.getElementById('geo-status-msg');
+  if (!navigator.geolocation) { msg.textContent='Non supporté.'; return; }
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      document.getElementById('field-lat').value = lat;
+      document.getElementById('field-lng').value = lng;
+      updateFeeUI(lat, lng);
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&accept-language=fr')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          document.getElementById('address-input').value = d.display_name || (lat.toFixed(5)+', '+lng.toFixed(5));
+          document.getElementById('address-input').classList.add('geo-filled');
+          msg.innerHTML = '<span style="color:#10b981;"><i class="fas fa-check-circle"></i> Position détectée</span>';
+          btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Ma position';
+          btn.disabled = false;
+        })
+        .catch(function(){
+          document.getElementById('address-input').value = 'GPS: '+lat.toFixed(5)+', '+lng.toFixed(5);
+          msg.innerHTML = '<span style="color:#10b981;"><i class="fas fa-check-circle"></i> Coordonnées enregistrées</span>';
+          btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Ma position';
+          btn.disabled = false;
+        });
+    },
+    function(){
+      msg.textContent='Accès refusé.';
+      btn.innerHTML='<i class="fas fa-map-marker-alt"></i> Ma position';
+      btn.disabled=false;
+    }
+  );
+}
+
+// Init
+selectCard('cash');
+</script>
+{% endblock %}

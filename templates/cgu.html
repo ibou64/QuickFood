@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}Conditions Générales d'Utilisation - QuickFood{% endblock %}
+{% block extra_css %}
+<style>
+  .cgu-container { max-width:860px; margin:50px auto; padding:0 20px 80px; }
+  .cgu-header { background:linear-gradient(135deg,#dc2626,#b91c1c); color:white;
+    border-radius:20px; padding:40px 40px 35px; margin-bottom:36px; }
+  .cgu-tabs { display:flex; gap:10px; margin-bottom:30px; flex-wrap:wrap; }
+  .cgu-tab { padding:10px 24px; border-radius:25px; border:2px solid #e5e7eb;
+    background:white; font-weight:700; font-size:.9rem; cursor:pointer;
+    color:#374151; transition:.2s; text-decoration:none; }
+  .cgu-tab.active, .cgu-tab:hover { background:#dc2626; color:white; border-color:#dc2626; }
+  .cgu-section { background:white; border-radius:16px; padding:32px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.07); margin-bottom:20px; }
+  .cgu-section h2 { font-size:1.15rem; font-weight:800; color:#dc2626;
+    margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #fef2f2; }
+  .cgu-section h3 { font-size:1rem; font-weight:700; color:#1e293b; margin:18px 0 8px; }
+  .cgu-section p, .cgu-section li { color:#374151; font-size:.92rem; line-height:1.7; }
+  .cgu-section ul { padding-left:20px; margin-bottom:12px; }
+  .cgu-section li { margin-bottom:5px; }
+  .badge-article { display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; background:#dc2626; color:white; border-radius:50%;
+    font-weight:800; font-size:.82rem; margin-right:8px; flex-shrink:0; }
+  .highlight-box { background:#fef2f2; border-left:4px solid #dc2626;
+    border-radius:0 10px 10px 0; padding:14px 16px; margin:14px 0; font-size:.88rem; color:#374151; }
+  .info-box { background:#eff6ff; border-left:4px solid #2563eb;
+    border-radius:0 10px 10px 0; padding:14px 16px; margin:14px 0; font-size:.88rem; color:#1e3a8a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cgu-container">
+
+  <div class="cgu-header">
+    <h1 style="font-weight:800;font-size:1.9rem;margin-bottom:8px;">
+      Conditions Générales d'Utilisation
+    </h1>
+    <p style="opacity:.85;margin-bottom:4px;">QuickFood — Plateforme de mise en relation à Dakar, Sénégal</p>
+    <p style="opacity:.65;font-size:.85rem;">Version 2.0 — En vigueur à compter du 1er janvier 2026</p>
+  </div>
+
+  <div class="cgu-tabs">
+    <a class="cgu-tab active" onclick="switchTab('client')" href="#">👤 CGU Clients</a>
+    <a class="cgu-tab" onclick="switchTab('partner')" href="#">🤝 CGU Partenaires</a>
+  </div>
+
+  <!-- ════════════ CGU CLIENTS ════════════ -->
+  <div id="tab-client">
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">1</span> Présentation de QuickFood</h2>
+      <p>QuickFood est une plateforme numérique de <strong>mise en relation</strong> entre des consommateurs (ci-après « Clients ») et des commerces partenaires (restaurants, supermarchés, fruiteries, boulangeries) situés dans la région de Dakar, Sénégal.</p>
+      <div class="info-box">
+        <strong>ℹ️ Rôle de QuickFood :</strong> QuickFood est une plateforme d'intermédiation numérique. La livraison des commandes est assurée directement par chaque commerce partenaire, via ses propres livreurs ou prestataires. QuickFood n'emploie pas de livreurs et n'assure pas directement la livraison.
+      </div>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">2</span> Création de compte</h2>
+      <h3>2.1 Conditions d'accès</h3>
+      <p>Pour passer commande sur QuickFood, le Client doit :</p>
+      <ul>
+        <li>Être âgé d'au moins 18 ans ou avoir l'autorisation d'un représentant légal ;</li>
+        <li>Fournir des informations exactes, complètes et à jour lors de l'inscription ;</li>
+        <li>Disposer d'une adresse email valide et d'un numéro de téléphone sénégalais.</li>
+      </ul>
+      <h3>2.2 Responsabilité du compte</h3>
+      <p>Le Client est seul responsable de la confidentialité de ses identifiants. En cas de perte ou d'utilisation frauduleuse, le Client doit contacter QuickFood immédiatement via le module Support.</p>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">3</span> Passation et confirmation de commande</h2>
+      <h3>3.1 Processus de commande</h3>
+      <ul>
+        <li>Le Client sélectionne ses produits dans le menu du commerce partenaire ;</li>
+        <li>Il renseigne son adresse de livraison et ses coordonnées GPS ;</li>
+        <li>Il choisit son mode de paiement ;</li>
+        <li>La commande est transmise directement au commerce partenaire.</li>
+      </ul>
+      <h3>3.2 Modification et annulation</h3>
+      <p>Une commande peut être annulée sans frais dans les <strong>5 minutes</strong> suivant sa confirmation. Passé ce délai, l'annulation est soumise à l'accord du partenaire.</p>
+      <div class="highlight-box">⚠️ QuickFood ne garantit pas la disponibilité permanente des produits. En cas d'indisponibilité, le Client sera contacté par le partenaire et remboursé intégralement.</div>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">4</span> Livraison — Assurée par le Partenaire</h2>
+      <div class="highlight-box" style="background:#fff7ed;border-left-color:#d97706;color:#92400e;">
+        <strong>⚠️ Important :</strong> La livraison de votre commande est entièrement organisée et assurée par le commerce partenaire. QuickFood met à disposition la plateforme de commande et le calcul de distance, mais n'intervient pas dans le processus de livraison physique.
+      </div>
+      <h3>4.1 Responsabilité de livraison</h3>
+      <p>Chaque commerce partenaire est entièrement responsable de :</p>
+      <ul>
+        <li>L'organisation et la coordination de ses livreurs ;</li>
+        <li>Le respect des délais de livraison annoncés ;</li>
+        <li>La qualité de l'emballage et l'intégrité des produits livrés ;</li>
+        <li>La prise en charge des incidents de livraison (retard, perte, dommage).</li>
+      </ul>
+      <h3>4.2 Zone de livraison</h3>
+      <p>Chaque partenaire définit sa propre zone de livraison dans la région de Dakar. La disponibilité de la livraison vers votre adresse dépend du rayon de livraison défini par le commerce concerné.</p>
+      <h3>4.3 Frais de livraison</h3>
+      <ul>
+        <li>Les frais sont calculés par QuickFood selon la distance GPS entre le commerce et le Client ;</li>
+        <li>Ces frais sont reversés intégralement au commerce partenaire qui assure la livraison ;</li>
+        <li>QuickFood ne perçoit aucune commission sur les frais de livraison.</li>
+      </ul>
+      <h3>4.4 Réception</h3>
+      <p>Le Client doit être joignable et présent à l'adresse indiquée. En cas d'absence prolongée, le livreur du partenaire peut retourner la commande. Les frais de relivraison sont à la charge du Client et fixés par le partenaire.</p>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">5</span> Paiements</h2>
+      <h3>5.1 Moyens de paiement</h3>
+      <ul>
+        <li><strong>Wave</strong> — paiement mobile instantané ;</li>
+        <li><strong>Orange Money</strong> — paiement mobile Orange ;</li>
+        <li><strong>Visa / Mastercard</strong> — carte bancaire via PayTech ;</li>
+        <li><strong>Paiement à la livraison</strong> — espèces remises au livreur du partenaire.</li>
+      </ul>
+      <h3>5.2 Sécurité</h3>
+      <p>Les paiements en ligne sont traités via PayTech. QuickFood ne stocke aucune donnée bancaire.</p>
+      <h3>5.3 Remboursements</h3>
+      <p>Les remboursements sont traités sous <strong>48 à 72 heures</strong> via le même moyen de paiement utilisé.</p>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">6</span> Responsabilités</h2>
+      <p>QuickFood agit exclusivement comme plateforme d'intermédiation numérique. Sa responsabilité est limitée à :</p>
+      <ul>
+        <li>La bonne transmission des commandes aux partenaires ;</li>
+        <li>Le bon fonctionnement technique de la plateforme ;</li>
+        <li>La sécurité des paiements en ligne.</li>
+      </ul>
+      <p>QuickFood ne peut être tenu responsable de :</p>
+      <ul>
+        <li>La qualité, la fraîcheur ou la conformité des produits livrés (responsabilité du partenaire) ;</li>
+        <li>Les retards ou incidents de livraison (responsabilité du partenaire) ;</li>
+        <li>Les informations produits publiées par les partenaires.</li>
+      </ul>
+      <div class="highlight-box">En cas de litige, contactez d'abord le commerce partenaire. Si le problème persiste, le support QuickFood est disponible dans les <strong>24 heures</strong> suivant la livraison.</div>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">7</span> Données personnelles</h2>
+      <p>QuickFood collecte les données nécessaires au fonctionnement de la plateforme (nom, email, téléphone, adresse, historique de commandes) conformément à la loi sénégalaise sur la protection des données personnelles.</p>
+      <ul>
+        <li>Les données ne sont pas vendues à des tiers ;</li>
+        <li>L'adresse de livraison est partagée avec le partenaire pour l'exécution de la commande uniquement ;</li>
+        <li>Droit d'accès, rectification et suppression disponible via support@quickfood.sn.</li>
+      </ul>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">8</span> Support et réclamations</h2>
+      <p>QuickFood met à disposition un module de support accessible depuis toutes les pages de la plateforme. Pour toute réclamation :</p>
+      <ul>
+        <li>Délai de réponse : <strong>24 heures ouvrables</strong> ;</li>
+        <li>Email : <strong>support@quickfood.sn</strong> ;</li>
+        <li>Disponible 7j/7 de 8h à 22h.</li>
+      </ul>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">9</span> Droit applicable</h2>
+      <p>Les présentes CGU sont soumises au droit sénégalais. Tout litige non résolu amiablement sera porté devant le Tribunal compétent de Dakar.</p>
+    </div>
+
+  </div><!-- /tab-client -->
+
+  <!-- ════════════ CGU PARTENAIRES ════════════ -->
+  <div id="tab-partner" style="display:none;">
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">1</span> Objet du partenariat</h2>
+      <p>Les présentes CGU Partenaires régissent les relations entre QuickFood et tout commerce souhaitant référencer ses produits sur la plateforme. QuickFood fournit uniquement la plateforme numérique de prise de commandes.</p>
+      <div class="info-box">
+        <strong>ℹ️ Modèle QuickFood :</strong> QuickFood est une plateforme de mise en relation. <strong>Le Partenaire assure lui-même la livraison</strong> de ses commandes via ses propres ressources (livreurs salariés, prestataires externes, etc.). QuickFood ne fournit pas de service de livraison.
+      </div>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">2</span> Inscription et éligibilité</h2>
+      <h3>2.1 Conditions d'éligibilité</h3>
+      <ul>
+        <li>Être un commerce légalement constitué au Sénégal (NINEA, registre du commerce) ;</li>
+        <li>Exercer dans la région de Dakar ;</li>
+        <li>Disposer de moyens propres pour assurer la livraison à domicile ;</li>
+        <li>Accepter les conditions tarifaires de commission de QuickFood.</li>
+      </ul>
+      <h3>2.2 Informations obligatoires</h3>
+      <p>Le Partenaire s'engage à fournir des informations exactes : nom, adresse, coordonnées GPS, horaires, photos et descriptions. Toute information mensongère entraîne la suspension immédiate du compte.</p>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">3</span> Obligations de livraison — Charge exclusive du Partenaire</h2>
+      <div class="highlight-box" style="background:#fff7ed;border-left-color:#d97706;color:#92400e;">
+        <strong>⚠️ Obligation centrale :</strong> La livraison est une obligation contractuelle du Partenaire. En acceptant une commande, le Partenaire s'engage à la livrer dans les délais annoncés, à ses propres frais et sous sa propre responsabilité.
+      </div>
+      <h3>3.1 Organisation de la livraison</h3>
+      <p>Le Partenaire est seul responsable de :</p>
+      <ul>
+        <li>Recruter, former et gérer ses livreurs ou prestataires de livraison ;</li>
+        <li>Couvrir les frais de carburant, assurance et maintenance des véhicules ;</li>
+        <li>Respecter la réglementation sénégalaise sur le transport et la sécurité routière ;</li>
+        <li>Assurer la livraison dans la zone géographique qu'il a définie sur la plateforme.</li>
+      </ul>
+      <h3>3.2 Délais et qualité</h3>
+      <ul>
+        <li>Préparer les commandes dans les <strong>15 minutes</strong> suivant leur réception ;</li>
+        <li>Respecter le délai de livraison estimé affiché aux Clients ;</li>
+        <li>Emballer correctement les produits pour garantir leur intégrité ;</li>
+        <li>Contacter le Client en cas de retard ou d'incident.</li>
+      </ul>
+      <h3>3.3 Frais de livraison</h3>
+      <p>Les frais de livraison sont calculés par QuickFood selon la distance GPS et reversés <strong>intégralement</strong> au Partenaire. Ces frais doivent couvrir les coûts de livraison du Partenaire. QuickFood ne perçoit aucune commission sur ces frais.</p>
+      <div class="highlight-box">⚠️ Un taux d'annulation ou de retard supérieur à 15% sur 30 jours peut entraîner une suspension temporaire du compte partenaire.</div>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">4</span> Responsabilité du Partenaire</h2>
+      <p>Le Partenaire est seul responsable vis-à-vis des Clients pour :</p>
+      <ul>
+        <li>La qualité et la conformité des produits livrés ;</li>
+        <li>Le respect des délais de livraison ;</li>
+        <li>Les incidents survenus pendant la livraison (perte, dommage, accident) ;</li>
+        <li>Le comportement de ses livreurs ;</li>
+        <li>Le respect des normes d'hygiène alimentaire en vigueur au Sénégal.</li>
+      </ul>
+      <p>QuickFood ne peut être tenu responsable des manquements du Partenaire dans l'exécution de la livraison.</p>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">5</span> Commissions et paiements</h2>
+      <h3>5.1 Taux de commission (sur le montant des produits uniquement)</h3>
+      <ul>
+        <li><strong>Restaurants :</strong> 10% à 15% du montant HT des produits ;</li>
+        <li><strong>Supermarchés :</strong> 8% à 12% du montant HT ;</li>
+        <li><strong>Fruiteries :</strong> 8% à 10% du montant HT ;</li>
+        <li><strong>Boulangeries & Pâtisseries :</strong> 8% à 12% du montant HT.</li>
+      </ul>
+      <p>TVA applicable : <strong>18%</strong> — La commission est calculée hors frais de livraison. Les frais de livraison sont reversés intégralement au Partenaire.</p>
+      <h3>5.2 Versement des revenus</h3>
+      <ul>
+        <li>Versement chaque <strong>lundi</strong> pour les commandes de la semaine précédente ;</li>
+        <li>Via Wave, Orange Money ou virement bancaire ;</li>
+        <li>Relevé détaillé accessible dans le tableau de bord.</li>
+      </ul>
+      <h3>5.3 Litiges financiers</h3>
+      <p>Toute contestation doit être formulée sous <strong>7 jours</strong> à finance@quickfood.sn.</p>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">6</span> Obligations générales du Partenaire</h2>
+      <ul>
+        <li>Maintenir ses informations (horaires, produits, prix, zone de livraison) à jour ;</li>
+        <li>Souscrire aux assurances nécessaires pour l'activité de livraison ;</li>
+        <li>Ne pas démarcher les Clients acquis via QuickFood hors de la plateforme ;</li>
+        <li>Signaler toute modification (fermeture, changement d'adresse) sous 48h ;</li>
+        <li>Respecter la réglementation sénégalaise sur la sécurité alimentaire et le transport.</li>
+      </ul>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">7</span> Suspension et résiliation</h2>
+      <h3>7.1 Suspension</h3>
+      <p>QuickFood peut suspendre un compte en cas de : taux d'incidents élevé, manquements répétés aux délais, réclamations Clients excessives, impayés non résolus.</p>
+      <h3>7.2 Résiliation</h3>
+      <p>Préavis de <strong>15 jours</strong> par email. Les commandes en cours seront honorées. Les sommes dues versées sous 30 jours.</p>
+    </div>
+
+    <div class="cgu-section">
+      <h2><span class="badge-article">8</span> Propriété intellectuelle & Droit applicable</h2>
+      <p>En publiant du contenu sur QuickFood, le Partenaire concède une licence non exclusive pour la promotion sur la plateforme. Le droit sénégalais s'applique. Tribunal de Commerce de Dakar compétent en cas de litige.</p>
+      <p style="margin-top:16px;color:#9ca3af;font-size:.85rem;">Contact : <strong>partenaires@quickfood.sn</strong></p>
+    </div>
+
+  </div><!-- /tab-partner -->
+
+  <div style="text-align:center;margin-top:30px;">
+    <a href="{{ url_for('main.home') }}"
+       style="background:#dc2626;color:white;padding:14px 40px;border-radius:30px;text-decoration:none;font-weight:700;">
+      ← Retour à l'accueil
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tab) {
+  document.getElementById('tab-client').style.display  = tab==='client'  ? 'block' : 'none';
+  document.getElementById('tab-partner').style.display = tab==='partner' ? 'block' : 'none';
+  document.querySelectorAll('.cgu-tab').forEach(function(t,i) {
+    t.classList.toggle('active',(i===0&&tab==='client')||(i===1&&tab==='partner'));
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+if(window.location.hash==='#partner') switchTab('partner');
+</script>
+{% endblock %}
